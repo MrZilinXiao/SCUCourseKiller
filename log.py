@@ -13,7 +13,7 @@ class Log(object):
 封装后的logging
     '''
 
-    def __init__(self, logger=None, log_cate='search'):
+    def __init__(self, logger=None, log_cate='watch'):
         '''
             指定保存日志的文件路径，日志级别，以及调用文件
             将日志存入到指定的文件中
@@ -49,8 +49,8 @@ class Log(object):
         self.logger.addHandler(ch)
 
         #  添加下面一句，在记录日志之后移除句柄
-        # self.logger.removeHandler(ch)
-        # self.logger.removeHandler(fh)
+        self.logger.removeHandler(ch)
+        self.logger.removeHandler(fh)
         # 关闭打开的文件
         fh.close()
         ch.close()

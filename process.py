@@ -11,7 +11,7 @@ from main import *
 #         raise ConnectionError
 #
 #     req = session.request(method, url, params=params, data=data)
-#     print(req.text + '\n')  # for debug
+#     logger.info(req.text + '\n')  # for debug
 #     return req.text
 
 
@@ -28,9 +28,9 @@ def getToken(opener):
 
     try:
         token = token_pattern.findall(token_rep)[0][44:76]
-        print('Token:' + str(token))
+        logger.info('Token:' + str(token))
     except:
-        print('Getting Token Error')
+        logger.info('Getting Token Error')
 
     return token
 
@@ -62,16 +62,16 @@ def checkResult(result_data, opener):  # 检查结果界面
         for i in range(1, checkResultAttempt):
             resultResponse = opener.open(resultRequest)
             result = json.loads(resultResponse.read().decode('utf-8'))
-            print(result)
+            logger.info(result)
             if result['isFinish'] == True:
-                #     print("Success select or you've alredy selected")
+                #     logger.info("Success select or you've alredy selected")
                 #     success = True
                 # if (result['isFinish'].find("成功") != -1):
                 break
             # else:
-            #     print("Error")
+            #     logger.info("Error")
     except:
-        print("Error get result page")
+        logger.info("Error get result page")
 
     return False
 
@@ -92,9 +92,9 @@ def getResultData(selectResponse):
         result_data['kcNum'] = kcNum_pattern.findall(selectContent)[0][9:10]
         result_data['redisKey'] = redisKey_pattern.findall(selectContent)[0][12:26]
         success = True
-        print(result_data)
+        logger.info(result_data)
     except:
-        print("Getting Result Key Error")
+        logger.info("Getting Result Key Error")
 
     return result_data, success
 
@@ -125,7 +125,7 @@ def postSelect(select_data, opener):
     selectRequest = request.Request(select_url, select_data_parsed, headers=headers)
     selectResponse = opener.open(selectRequest)
 
-    # printResponse(selectResponse)
+    # logger.infoResponse(selectResponse)
 
     return selectResponse
 
@@ -144,14 +144,14 @@ def postToken(token, wantSelect, opener):
     selectRequest = request.Request(postToken_url, select_data_parsed, headers=headers)
     selectResponse = opener.open(selectRequest)
 
-    print(select_data)
+    logger.info(select_data)
 
     printResponse(selectResponse)
 
 
 def printResponse(someStrangeResponse):
     content = someStrangeResponse.read().decode('utf-8')
-    print(content)
+    logger.info(content)
 
 
 def postSelect(select_data, opener):  # select_data 字典
@@ -161,6 +161,6 @@ def postSelect(select_data, opener):  # select_data 字典
     selectRequest = request.Request(select_url, select_data_parsed, headers=headers)
     selectResponse = opener.open(selectRequest)
 
-    # printResponse(selectResponse)
+    # logger.infoResponse(selectResponse)
 
     return selectResponse
