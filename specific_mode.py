@@ -5,6 +5,7 @@ from config import *
 
 
 def course_watch(course_id, opener):
+    from main import watch_logger
     # keyword = parse.quote(course_keyword)  # 编码
     post_params = {'searchtj': course_id, 'xq': '0', 'jc': '0', 'kclbdm': ''}
     # req = process._request(session, 'POST', 'http://zhjw.scu.edu.cn/student/courseSelect/freeCourse/courseList',
@@ -13,7 +14,7 @@ def course_watch(course_id, opener):
     Request = request.Request(query_url, watch_data_parsed, headers=headers)
     Response = opener.open(Request)
     req = Response.read().decode('utf-8')
-    print(req)
+    watch_logger.info(req)
     dic = json.loads(req)
     parser = json.loads(dic['rwRxkZlList'])
     if len(parser) == 0:

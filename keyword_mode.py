@@ -2,12 +2,11 @@ from urllib import parse
 from urllib import request
 import json
 from config import *
-from main import *
-import re
-import process
+
 
 
 def course_watch(course_keyword, opener):
+    from main import select_logger, watch_logger, account_logger
     # keyword = parse.quote(course_keyword)  # 编码
     post_params = {'searchtj': course_keyword, 'xq': '0', 'jc': '0', 'kclbdm': ''}
     # req = process._request(session, 'POST', 'http://zhjw.scu.edu.cn/student/courseSelect/freeCourse/courseList',
@@ -17,7 +16,7 @@ def course_watch(course_keyword, opener):
     Response = opener.open(Request)
     #
     req = Response.read().decode('utf-8')
-    print(req)
+    watch_logger.info(req)
     dic = json.loads(req)
     parser = json.loads(dic['rwRxkZlList'])
 

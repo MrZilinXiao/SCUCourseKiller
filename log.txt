@@ -2,3 +2,17 @@
 2019-06-20 21:40:01,974 - main.py[line:14] - INFO: >>> test2 log msg: 222222222222222222222
 2019-06-20 21:40:01,974 - main.py[line:13] - INFO: >>> test1 log msg: 111111111111111111111
 2019-06-20 21:40:02,795 - main.py[line:14] - INFO: >>> test2 log msg: 222222222222222222222
+2019-06-20 22:33:28,785 - main.py[line:36] - INFO: >>> test1 log msg: 111111111111111111111
+2019-06-20 22:33:28,785 - main.py[line:37] - INFO: >>> test2 log msg: 222222222222222222222
+2019-06-20 22:33:48,675 - main.py[line:36] - INFO: >>> test1 log msg: 111111111111111111111
+2019-06-20 22:33:48,675 - main.py[line:37] - INFO: >>> test2 log msg: 222222222222222222222
+2019-06-20 22:36:33,131 - main.py[line:38] - INFO: >>> test1 log msg: 111111111111111111111
+2019-06-20 22:36:33,131 - main.py[line:39] - INFO: >>> test2 log msg: 222222222222222222222
+2019-06-20 22:36:33,132 - main.py[line:40] - INFO: fsdihoufihusd
+2019-06-20 22:36:57,481 - main.py[line:38] - INFO: >>> test1 log msg: 111111111111111111111
+2019-06-20 22:36:57,481 - main.py[line:39] - INFO: >>> test2 log msg: 222222222222222222222
+2019-06-20 22:36:57,482 - main.py[line:40] - INFO: fsdihoufihusd
+2019-06-20 22:40:31,156 - process.py[line:32] - INFO: Getting Token Error
+2019-06-20 22:54:38,681 - main.py[line:58] - INFO: Logging for 2018141451247
+2019-06-20 22:54:39,425 - main.py[line:62] - INFO: Logging successfully for 2018141451247
+2019-06-20 22:54:43,934 - process.py[line:32] - ERROR: Getting Token Error

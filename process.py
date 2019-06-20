@@ -4,7 +4,6 @@ from urllib import request
 import json
 import re
 
-
 # def _request(session, method, url, params=None, data=None):
 #     if method not in ['POST', 'GET'] or not session:
 #         raise ConnectionError
@@ -15,6 +14,7 @@ import re
 
 
 def getToken(opener):
+    from main import select_logger
     req = request.Request(token_url, headers=headers)
     rep = opener.open(req)
 
@@ -27,9 +27,9 @@ def getToken(opener):
 
     try:
         token = token_pattern.findall(token_rep)[0][44:76]
-        print('Token:' + str(token))
+        select_logger.info('Token:' + str(token))
     except:
-        print('Getting Token Error')
+        select_logger.error('Getting Token Error')
 
     return token
 
@@ -52,6 +52,7 @@ def convertSelectData(wantSelect):  # 课程列表转 kcIds 和 kcms
 
 
 def checkResult(result_data, opener):  # 检查结果界面
+    from main import select_logger
     global success
     success = False
 
@@ -62,7 +63,7 @@ def checkResult(result_data, opener):  # 检查结果界面
         for i in range(1, checkResultAttempt):
             resultResponse = opener.open(resultRequest)
             result = json.loads(resultResponse.read().decode('utf-8'))
-            print(result)
+            select_logger.info(result)
             if result['isFinish'] == True and result['result'][0].find('成功') != -1:
                 #     print("Success select or you've alredy selected")
                 #     success = True
@@ -72,12 +73,14 @@ def checkResult(result_data, opener):  # 检查结果界面
             # else:
             #     print("Error")
     except:
-        print("Error get result page")
+        select_logger.error("Error get result page")
 
     return success
 
 
 def getResultData(selectResponse):
+    from main import select_logger
+
     success = False
     result_data = {}
 
@@ -93,9 +96,9 @@ def getResultData(selectResponse):
         result_data['kcNum'] = kcNum_pattern.findall(selectContent)[0][9:10]
         result_data['redisKey'] = redisKey_pattern.findall(selectContent)[0][12:26]
         success = True
-        print(result_data)
+        select_logger.info(result_data)
     except:
-        print("Getting Result Key Error")
+        select_logger.error("Getting Result Key Error")
 
     return result_data, success
 
@@ -132,6 +135,7 @@ def postSelect(select_data, opener):
 
 
 def postToken(token, wantSelect, opener):
+    from main import select_logger
     select_data = {'dealType': '5', 'kcIds': '', 'kcms': '', 'fajhh': '4263', 'sj': '0_0', 'kclbdm': '',
                    'inputCode': '', 'tokenValue': str(token)}
 
@@ -145,14 +149,15 @@ def postToken(token, wantSelect, opener):
     selectRequest = request.Request(postToken_url, select_data_parsed, headers=headers)
     selectResponse = opener.open(selectRequest)
 
-    print(select_data)
+    select_logger.info(select_data)
 
     printResponse(selectResponse)
 
 
 def printResponse(someStrangeResponse):
+    from main import select_logger
     content = someStrangeResponse.read().decode('utf-8')
-    print(content)
+    select_logger.info(content)
 
 
 def postSelect(select_data, opener):  # select_data 字典

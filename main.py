@@ -1,25 +1,43 @@
-import log as logger
-import process
+import http.cookiejar
+import logging
 import time
+from urllib import error
+from urllib import parse
+from urllib import request
+
+import keyword_mode
+import process
+import specific_mode
 from config import *
 
-from urllib import request
-from urllib import parse
-from urllib import error
-import keyword_mode
-import specific_mode
 
-import http.cookiejar
-import re
+# Initializing Loggers
+
+def get_logger(logger_name, log_file, level=logging.INFO):
+    formatter = logging.Formatter('%(asctime)s : %(message)s', "%Y-%m-%d %H:%M:%S")
+    fileHandler = logging.FileHandler(log_file, mode='a')
+    fileHandler.setFormatter(formatter)
+
+    vlog = logging.getLogger(logger_name)
+    vlog.setLevel(level)
+    vlog.addHandler(fileHandler)
+
+    return vlog
+
+
+select_logfile = 'log/select.log'
+watch_logfile = 'log/watch.log'
+account_logfile = 'log/account.log'
+
+select_logger = get_logger('select', select_logfile)
+watch_logger = get_logger('watch', watch_logfile)
+account_logger = get_logger('account', account_logfile)
+
+# select_logger.setLevel(logging.DEBUG)
+# watch_logger.setLevel(logging.DEBUG)
+# account_logger.setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
-    # Initializing Loggers
-    # select_logger
-    # watching_logger
-    # account_logger
-    # select_logger.setLevel(logging.DEBUG)
-    # watching_logger.setLevel(logging.DEBUG)
-    # account_logger.setLevel(logging.DEBUG)
 
     # Create opener which store cookie
     cookie = http.cookiejar.CookieJar()
@@ -33,13 +51,13 @@ if __name__ == '__main__':
     login_data_parsed = parse.urlencode(login_data).encode("utf-8")
     loginRequest = request.Request(login_url, login_data_parsed, headers=headers)
 
-    print("Logging for " + login_data['j_username'])
+    account_logger.info("Logging for " + login_data['j_username'])
 
     try:
         loginResponse = opener.open(loginRequest)
-        print("Logging successfully for " + login_data['j_username'])
+        account_logger.info("Logging successfully for " + login_data['j_username'])
     except error.HTTPError as e:
-        print("Wrong Username or Password")
+        account_logger.info("Wrong Username or Password")
         exit()
 
     if MODE == 'Keyword':
@@ -48,7 +66,7 @@ if __name__ == '__main__':
             global course
             course = keyword_mode.course_watch(Course_Keyword, opener)
             if course == 'No Search Results':
-                print("No Searching Results, Please Check Your Configuration!")
+                watch_logger.info("No Searching Results, Please Check Your Configuration!")
                 exit()
             if course != 'No Courses Available':
                 wantSelect.clear()
@@ -58,13 +76,14 @@ if __name__ == '__main__':
                     "kcm": course['kcm'],
                     "zxjxjhh": course['zxjxjhh'],
                 })
-                print("Watching Attempt #" + str(i) + ", Available Course Found! Course Info:" + str(course))
+                watch_logger.info(
+                    "Watching Attempt #" + str(i) + ", Available Course Found! Course Info:" + str(course))
                 break
             else:
-                print("Watching Attempt #" + str(i) + ", No Matching For " + Course_Keyword)
+                watch_logger.info("Watching Attempt #" + str(i) + ", No Matching For " + Course_Keyword)
                 time.sleep(watchInterval)
         for j in range(1, postSelectAttempt):
-            print(
+            select_logger.info(
                 "Posting Attempt #" + str(j) + ", for " + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
                     course['kxh']))
             # selectData, success = process.getSelectData(wantSelect)  # 获取
@@ -77,12 +96,12 @@ if __name__ == '__main__':
             try:
                 selectResponse = process.postSelect(selectData, opener)  # Post选课 selectResponse回复
             except error.HTTPError as e:
-                print("Failed..." + str(e))
+                select_logger.info("Failed..." + str(e))
                 continue
             result_data, success = process.getResultData(selectResponse)  # 解析selectResponse
             if not success:
                 continue
-            print("Checking Result...")
+            select_logger.info("Checking Result...")
             success = process.checkResult(result_data, opener)  # 查询选课结果 查询失败将会循环
             if not success:
                 continue
@@ -95,7 +114,7 @@ if __name__ == '__main__':
             # global course
             course = specific_mode.course_watch(wantSelect['kxh'], opener)
             if course == 'No Search Results':
-                print("No Searching Results, Please Check Your Configuration!")
+                watch_logger.info("No Searching Results, Please Check Your Configuration!")
                 exit()
             if course != 'No Courses Available':
                 # wantSelect.clear()
@@ -106,17 +125,19 @@ if __name__ == '__main__':
                 #     "zxjxjhh": course['zxjxjhh'],
                 # })
                 if course['kch'] == wantSelect['kch'] and course['kxh'] == wantSelect['kxh']:
-                    print("Watching Attempt #" + str(i) + ", Available Course Found! Course Info:" + str(course))
+                    watch_logger.info(
+                        "Watching Attempt #" + str(i) + ", Available Course Found! Course Info:" + str(course))
                     break
                 # else:
                 #     print("")
             else:
-                print("Watching Attempt #" + str(i) + ", No Matching For " + wantSelect['kxh'])
+                watch_logger.info("Watching Attempt #" + str(i) + ", No Matching For " + wantSelect['kxh'])
                 time.sleep(watchInterval)
 
         for j in range(1, postSelectAttempt):
-            print("Posting Attempt #" + str(j) + ", for " + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
-                course['kxh']))
+            select_logger.info(
+                "Posting Attempt #" + str(j) + ", for " + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
+                    course['kxh']))
             # selectData, success = process.getSelectData(wantSelect)  # 获取
             selectData = process.getSelectData(wantSelect)
             token = process.getToken(opener)
@@ -127,12 +148,12 @@ if __name__ == '__main__':
             try:
                 selectResponse = process.postSelect(selectData, opener)  # Post选课 selectResponse回复
             except error.HTTPError as e:
-                print("Failed..." + str(e))
+                select_logger.info("Failed..." + str(e))
                 continue
             result_data, success = process.getResultData(selectResponse)  # 解析selectResponse
             if not success:
                 continue
-            print("Checking Result...")
+            select_logger.info("Checking Result...")
             success = process.checkResult(result_data, opener)  # 查询选课结果 查询失败将会循环
             if not success:
                 continue
