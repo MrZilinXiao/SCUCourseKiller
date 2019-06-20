@@ -1,4 +1,4 @@
-import log
+from log import Log
 import process
 import time
 from config import *
@@ -11,9 +11,13 @@ import keyword_mode
 import http.cookiejar
 import re
 
-select_logger = log.get_logger("log/select.log")
-watching_logger = log.get_logger("log/watch.log")
-account_logger = log.get_logger("log/account.log")
+select_logger = Log('select').getlog()
+watching_logger = Log('watching').getlog()
+account_logger = Log('account').getlog()
+
+# select_logger.setLevel(Log('select').logging.DEBUG)
+# watching_logger.setLevel(Log('select').logging.DEBUG)
+# account_logger.setLevel(Log('select').logging.DEBUG)
 
 if __name__ == '__main__':
     # Initializing Loggers
@@ -30,7 +34,7 @@ if __name__ == '__main__':
     login_data_parsed = parse.urlencode(login_data).encode("utf-8")
     loginRequest = request.Request(login_url, login_data_parsed, headers=headers)
 
-    account_logger.info("Logging for " + login_data['j_username'])
+    print("Logging for " + login_data['j_username'])
 
     try:
         loginResponse = opener.open(loginRequest)
@@ -53,30 +57,29 @@ if __name__ == '__main__':
                     "kcm": course['kcm'],
                     "zxjxjhh": course['zxjxjhh'],
                 })
-                watching_logger.info("Watching Attempt #" + str(i) + ", Available Course Found!" + str(course))
+                print("Watching Attempt #" + str(i) + ", Available Course Found! Course Info:" + str(course))
                 break
             else:
-                watching_logger.info("Watching Attempt #" + str(i) + "No Matching For" + Course_Keyword)
+                print("Watching Attempt #" + str(i) + "No Matching For " + Course_Keyword)
                 time.sleep(watchInterval)
         for j in range(1, postSelectAttempt):
-            watching_logger.info("Posting Attempt #" + str(j) + ", for " + str(course['kcm'])+','+str(course['kch'])+'_'+str(course['kxh']))
+            print("Posting Attempt #" + str(j) + ", for " + str(course['kcm'])+','+str(course['kch'])+'_'+str(course['kxh']))
             selectData, success = process.getSelectData(wantSelect)  # 获取
-            token = getToken()
-            postToken(token, wantSelect)  # 验证码不能为空在这里出现
+            token = process.getToken(opener)
+            process.postToken(token, wantSelect, opener)  # 验证码不能为空在这里出现
             if not success:
                 print("Getting token error")
                 continue
-            # print(str(i)+" attempts post...")
             try:
-                selectResponse = postSelect(selectData)  # Post选课 selectResponse回复
+                selectResponse = process.postSelect(selectData,opener)  # Post选课 selectResponse回复
             except error.HTTPError as e:
                 print("Failed..." + str(e))
                 continue
-            result_data, success = getResultData(selectResponse)  # 解析selectResponse
+            result_data, success = process.getResultData(selectResponse)  # 解析selectResponse
             if not success:
                 continue
-            print("Checking Result...")
-            success = checkResult(result_data)  # 查询选课结果 查询失败将会循环
+                print("Checking Result...")
+            success = process.checkResult(result_data, opener)  # 查询选课结果 查询失败将会循环
             if not success:
                 continue
             else:

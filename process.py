@@ -28,9 +28,9 @@ def getToken(opener):
 
     try:
         token = token_pattern.findall(token_rep)[0][44:76]
-        account_logger.info('Token:' + str(token))
+        print('Token:' + str(token))
     except:
-        account_logger.info('Getting Token Error')
+        print('Getting Token Error')
 
     return token
 
@@ -99,7 +99,62 @@ def getResultData(selectResponse):
     return result_data, success
 
 
+def getSelectData(wantSelect):
+    select_data = {
+        'dealType': '5',
+        'kcIds': '',
+        'kcms': '',
+        'fajhh': '4263',
+        'sj': '0_0',
+        'kclbdm': ''
+    }
+
+    # Get data ready
+
+    data = convertSelectData(wantSelect)
+    select_data['kcIds'] = data['kcIds']
+    select_data['kcms'] = data['kcms']
+
+    return select_data, True  # select_data 字典
+
+
 def postSelect(select_data, opener):
+    # Post!
+
+    select_data_parsed = parse.urlencode(select_data).encode('utf-8')
+    selectRequest = request.Request(select_url, select_data_parsed, headers=headers)
+    selectResponse = opener.open(selectRequest)
+
+    # printResponse(selectResponse)
+
+    return selectResponse
+
+
+def postToken(token, wantSelect, opener):
+    select_data = {'dealType': '5', 'kcIds': '', 'kcms': '', 'fajhh': '4263', 'sj': '0_0', 'kclbdm': '',
+                   'inputCode': '', 'tokenValue': str(token)}
+
+    # Get data ready
+
+    data = convertSelectData(wantSelect)
+    select_data['kcIds'] = data['kcIds']
+    select_data['kcms'] = data['kcms']
+
+    select_data_parsed = parse.urlencode(select_data).encode('utf-8')
+    selectRequest = request.Request(postToken_url, select_data_parsed, headers=headers)
+    selectResponse = opener.open(selectRequest)
+
+    print(select_data)
+
+    printResponse(selectResponse)
+
+
+def printResponse(someStrangeResponse):
+    content = someStrangeResponse.read().decode('utf-8')
+    print(content)
+
+
+def postSelect(select_data, opener):  # select_data 字典
     # Post!
 
     select_data_parsed = parse.urlencode(select_data).encode('utf-8')
