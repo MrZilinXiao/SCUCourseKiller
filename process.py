@@ -1,0 +1,111 @@
+from config import *
+from urllib import parse
+from urllib import request
+import json
+import re
+from main import *
+
+
+# def _request(session, method, url, params=None, data=None):
+#     if method not in ['POST', 'GET'] or not session:
+#         raise ConnectionError
+#
+#     req = session.request(method, url, params=params, data=data)
+#     print(req.text + '\n')  # for debug
+#     return req.text
+
+
+def getToken(opener):
+    req = request.Request(token_url, headers=headers)
+    rep = opener.open(req)
+
+    re1q = request.Request(captcha_url, headers=headers)
+    re1p = opener.open(re1q)
+
+    token_pattern = re.compile(token_key)
+
+    token_rep = rep.read().decode("utf-8")
+
+    try:
+        token = token_pattern.findall(token_rep)[0][44:76]
+        account_logger.info('Token:' + str(token))
+    except:
+        account_logger.info('Getting Token Error')
+
+    return token
+
+
+def convertSelectData(wantSelect):  # 课程列表转 kcIds 和 kcms
+    temp_kcIds = []
+    temp_kcms = []
+    for course in wantSelect:
+        temp_kcIds.append(course['kch'] + '_' + course['kxh'] + '_' + course['zxjxjhh'])
+        temp_kcms.append(course['kcm'] + '_' + course['kxh'])
+    kcIds = ','.join(temp_kcIds)
+    t_kcms = ','.join(temp_kcms)
+    kcms = ''
+    for ch in t_kcms:
+        kcms += str(ord(ch)) + ','
+    return {
+        'kcIds': kcIds,
+        'kcms': kcms
+    }
+
+
+def checkResult(result_data, opener):  # 检查结果界面
+    success = False
+
+    try:
+        result_data_parsed = parse.urlencode(result_data).encode('utf-8')
+        resultRequest = request.Request(result_url, result_data_parsed, headers=headers)
+
+        for i in range(1, checkResultAttempt):
+            resultResponse = opener.open(resultRequest)
+            result = json.loads(resultResponse.read().decode('utf-8'))
+            print(result)
+            if result['isFinish'] == True:
+                #     print("Success select or you've alredy selected")
+                #     success = True
+                # if (result['isFinish'].find("成功") != -1):
+                break
+            # else:
+            #     print("Error")
+    except:
+        print("Error get result page")
+
+    return False
+
+
+def getResultData(selectResponse):
+    success = False
+    result_data = {}
+
+    try:
+        selectContent = selectResponse.read().decode('utf-8')
+    except:
+        return result_data, success
+
+    kcNum_pattern = re.compile(kcNum_key)
+    redisKey_pattern = re.compile(redisKey_Key)
+
+    try:
+        result_data['kcNum'] = kcNum_pattern.findall(selectContent)[0][9:10]
+        result_data['redisKey'] = redisKey_pattern.findall(selectContent)[0][12:26]
+        success = True
+        print(result_data)
+    except:
+        print("Getting Result Key Error")
+
+    return result_data, success
+
+
+def postSelect(select_data, opener):
+    # Post!
+
+    select_data_parsed = parse.urlencode(select_data).encode('utf-8')
+    selectRequest = request.Request(select_url, select_data_parsed, headers=headers)
+    selectResponse = opener.open(selectRequest)
+
+    # printResponse(selectResponse)
+
+    return selectResponse
