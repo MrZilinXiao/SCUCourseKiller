@@ -10,6 +10,11 @@ import process
 import specific_mode
 from config import *
 
+# To-do list
+# 1. Solve logging twice problem
+# 2. Specific Mode Multiple Courses Watching
+# 3. Other Courses Types Supporting
+# 4. Course Conflicts Detection
 
 # Initializing Loggers
 
@@ -126,7 +131,7 @@ if __name__ == '__main__':
         token = process.getToken(opener)
         for i in range(1, watchAttempt):
             # global course
-            course = specific_mode.course_watch(wantSelect[0]['kch'], opener)
+            course = specific_mode.course_watch(wantSelect[0]['kch'], opener, wantSelect[0]['kxh'])
             if course == 'No Search Results':
                 watch_logger.info("No Searching Results, Please Check Your Configuration!")
                 exit()

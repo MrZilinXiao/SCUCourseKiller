@@ -4,25 +4,39 @@ import json
 from config import *
 
 
-def course_watch(course_id, opener):
+def course_watch(course_id, opener, course_kxh='-1'):
     from main import watch_logger
     # keyword = parse.quote(course_keyword)  # 编码
-    post_params = {'searchtj': str(course_id), 'xq': '0', 'jc': '0', 'kclbdm': ''}
+
     # req = process._request(session, 'POST', 'http://zhjw.scu.edu.cn/student/courseSelect/freeCourse/courseList',
     #                params=post_params, data=None)
-    watch_data_parsed = parse.urlencode(post_params).encode('utf-8')
-    Request = request.Request(query_url, watch_data_parsed, headers=headers)
+
+    # Request = request.Request(query_url, watch_data_parsed, headers=headers)
+    if Course_Type == 'freeCourse':
+        post_params = {'searchtj': str(course_id), 'xq': '0', 'jc': '0', 'kclbdm': ''}
+        watch_data_parsed = parse.urlencode(post_params).encode('utf-8')
+        Request = request.Request(query_url, watch_data_parsed, headers=headers)
+    elif Course_Type == 'planCourse':
+        post_params = {'kch': str(course_id), 'xq': '0', 'jc': '0', 'kclbdm': '', 'jhxn': str(wantSelect[0]['zxjxjhh'])}
+        watch_data_parsed = parse.urlencode(post_params).encode('utf-8')
+        Request = request.Request(planCourse_url, watch_data_parsed, headers=headers)
     Response = opener.open(Request)
     req = Response.read().decode('utf-8')
     # watch_logger.info(req)
     dic = json.loads(req)
-    parser = json.loads(dic['rwRxkZlList'])
+    if Course_Type == 'freeCourse':
+        parser = json.loads(dic['rwRxkZlList'])
+    elif Course_Type == 'planCourse':
+        parser = json.loads(dic['rwfalist'])
     if len(parser) == 0:
         return 'No Search Results'
     watch_logger.info(str(parser))
     for i in range(len(parser)):
         if parser[i]['bkskyl'] > 0:
-            return parser[i]  # return data example:
+            if course_kxh == '-1' or course_kxh == parser[i]['kxh']:
+                return parser[i]  # return data example:
+            else:
+                continue
         # {'bkskrl': 416, 'bkskyl': 0, 'cxjc': '3', 'id': '4077', 'jasm': '水上报告厅', 'jxlm': '一教A座', 'kc
         # h': '999005030', 'kclbdm': '700', 'kclbmc': '人文艺术与中华文化传承', 'kcm': '中华文化（历史篇）', 'k
         # kxqh': '03', 'kkxqm': '江安', 'kkxsh': '106', 'kkxsjc': '历史文化学院（旅游学院）', 'kslxdm': '02', '
