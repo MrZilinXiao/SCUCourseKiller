@@ -7,19 +7,19 @@ from config import *
 def course_watch(course_id, opener):
     from main import watch_logger
     # keyword = parse.quote(course_keyword)  # 编码
-    post_params = {'searchtj': course_id, 'xq': '0', 'jc': '0', 'kclbdm': ''}
+    post_params = {'searchtj': str(course_id), 'xq': '0', 'jc': '0', 'kclbdm': ''}
     # req = process._request(session, 'POST', 'http://zhjw.scu.edu.cn/student/courseSelect/freeCourse/courseList',
     #                params=post_params, data=None)
     watch_data_parsed = parse.urlencode(post_params).encode('utf-8')
     Request = request.Request(query_url, watch_data_parsed, headers=headers)
     Response = opener.open(Request)
     req = Response.read().decode('utf-8')
-    watch_logger.info(req)
+    # watch_logger.info(req)
     dic = json.loads(req)
     parser = json.loads(dic['rwRxkZlList'])
     if len(parser) == 0:
         return 'No Search Results'
-
+    watch_logger.info(str(parser))
     for i in range(len(parser)):
         if parser[i]['bkskyl'] > 0:
             return parser[i]  # return data example:

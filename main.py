@@ -17,10 +17,13 @@ def get_logger(logger_name, log_file, level=logging.INFO):
     formatter = logging.Formatter('%(asctime)s : %(message)s', "%Y-%m-%d %H:%M:%S")
     fileHandler = logging.FileHandler(log_file, mode='a')
     fileHandler.setFormatter(formatter)
+    streamhandler = logging.StreamHandler()
+    streamhandler.setFormatter(formatter)
 
     vlog = logging.getLogger(logger_name)
     vlog.setLevel(level)
     vlog.addHandler(fileHandler)
+    vlog.addHandler(streamhandler)
 
     return vlog
 
@@ -33,9 +36,9 @@ select_logger = get_logger('select', select_logfile)
 watch_logger = get_logger('watch', watch_logfile)
 account_logger = get_logger('account', account_logfile)
 
-# select_logger.setLevel(logging.DEBUG)
-# watch_logger.setLevel(logging.DEBUG)
-# account_logger.setLevel(logging.DEBUG)
+select_logger.setLevel(logging.DEBUG)
+watch_logger.setLevel(logging.DEBUG)
+account_logger.setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
 
@@ -57,7 +60,7 @@ if __name__ == '__main__':
         loginResponse = opener.open(loginRequest)
         account_logger.info("Logging successfully for " + login_data['j_username'])
     except error.HTTPError as e:
-        account_logger.info("Wrong Username or Password")
+        account_logger.info(e)
         exit()
 
     if MODE == 'Keyword':
@@ -103,16 +106,27 @@ if __name__ == '__main__':
                 continue
             select_logger.info("Checking Result...")
             success = process.checkResult(result_data, opener)  # 查询选课结果 查询失败将会循环
-            if not success:
+            if success == 'Conflict':
+                select_logger.info('Selection Conflicts!' + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
+                    course['kxh']))
+                break
+            elif success == 'No Available Courses':
+                select_logger.info('No Available Courses ' + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
+                    course['kxh']))
+                break
+
+            elif not success:
                 continue
             else:
+                select_logger.info('Select Successful' + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
+                    course['kxh']))
                 break
 
     if MODE == 'Specific':
         token = process.getToken(opener)
         for i in range(1, watchAttempt):
             # global course
-            course = specific_mode.course_watch(wantSelect['kxh'], opener)
+            course = specific_mode.course_watch(wantSelect[0]['kch'], opener)
             if course == 'No Search Results':
                 watch_logger.info("No Searching Results, Please Check Your Configuration!")
                 exit()
@@ -124,14 +138,15 @@ if __name__ == '__main__':
                 #     "kcm": course['kcm'],
                 #     "zxjxjhh": course['zxjxjhh'],
                 # })
-                if course['kch'] == wantSelect['kch'] and course['kxh'] == wantSelect['kxh']:
+                if course['kch'] == wantSelect[0]['kch'] and course['kxh'] == wantSelect[0]['kxh']:
                     watch_logger.info(
                         "Watching Attempt #" + str(i) + ", Available Course Found! Course Info:" + str(course))
                     break
                 # else:
                 #     print("")
             else:
-                watch_logger.info("Watching Attempt #" + str(i) + ", No Matching For " + wantSelect['kxh'])
+                watch_logger.info(
+                    "Watching Attempt #" + str(i) + ", No Matching For " + wantSelect[0]['kcm'] + wantSelect[0]['kch'])
                 time.sleep(watchInterval)
 
         for j in range(1, postSelectAttempt):
@@ -155,7 +170,18 @@ if __name__ == '__main__':
                 continue
             select_logger.info("Checking Result...")
             success = process.checkResult(result_data, opener)  # 查询选课结果 查询失败将会循环
-            if not success:
+            if success == 'Conflict':
+                select_logger.info('Selection Conflicts!' + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
+                    course['kxh']))
+                break
+            elif success == 'No Available Courses':
+                select_logger.info('No Available Courses ' + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
+                    course['kxh']))
+                break
+
+            elif not success:
                 continue
             else:
+                select_logger.info('Select Successful' + str(course['kcm']) + ',' + str(course['kch']) + '_' + str(
+                    course['kxh']))
                 break

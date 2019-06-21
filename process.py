@@ -70,6 +70,11 @@ def checkResult(result_data, opener):  # 检查结果界面
                 # if (result['isFinish'].find("成功") != -1):
                 success = True
                 break
+            if result['result'][0].find('没有课余量') != -1:
+                success = 'No Available Courses'
+                break
+            if result['result'][0].find('冲突') != -1:
+                success = 'Conflict'
             # else:
             #     print("Error")
     except:

@@ -4,7 +4,6 @@ import json
 from config import *
 
 
-
 def course_watch(course_keyword, opener):
     from main import select_logger, watch_logger, account_logger
     # keyword = parse.quote(course_keyword)  # 编码
@@ -16,10 +15,11 @@ def course_watch(course_keyword, opener):
     Response = opener.open(Request)
     #
     req = Response.read().decode('utf-8')
-    watch_logger.info(req)
+    # watch_logger.info(req)
     dic = json.loads(req)
     parser = json.loads(dic['rwRxkZlList'])
 
+    watch_logger.info(str(parser))
     if len(parser) == 0:
         return 'No Search Results'
 
@@ -36,7 +36,6 @@ def course_watch(course_keyword, opener):
         #  '', 'xkkzdm': '01', 'xkkzh': '', 'xkkzsm': '可选可退', 'xkmsdm': '01', 'xkmssm': '直选式', 'xkxzsm':
         #  ';', 'xqm': '江安', 'xs': 48, 'zcsm': '1-17周', 'zxjxjhh': '2019-2020-1-1'}
     return 'No Courses Available'
-
 
 # def course_select(session, dealType, course_inf):
 #     kcIds = course_inf['kch'] + '_' + course_inf['kxh'] + '_' + course_inf['zxjxjhh']
