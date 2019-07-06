@@ -24,7 +24,8 @@ captcha_url = "http://zhjw.scu.edu.cn/student/courseSelect/selectCourse/getYzmPi
 select_url = "http://zhjw.scu.edu.cn/student/courseSelect/selectCourses/waitingfor"
 result_url = "http://zhjw.scu.edu.cn/student/courseSelect/selectResult/query"
 
-user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) " \
+             "Chrome/71.0.3578.98 Safari/537.36 "
 
 token_key = r"""<input type="hidden" id="tokenValue" value=".+"\/>"""
 kcNum_key = "kcNum = \".+\""
