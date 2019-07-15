@@ -1,5 +1,8 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
+
+from django.contrib.auth import login
+from .models import UserProfile, User
+from .forms import RegForm
 
 
 # Create your views here.
@@ -16,8 +19,51 @@ def check_captcha(request):
     return HttpResponse(stream.getvalue())
 
 
+def checkUsername(request):
+    user_name = request.GET.get('userName')
+    if User.objects.filter(username=user_name).exists():
+        return HttpResponse(1)
+    else:
+        return HttpResponse(0)
+
+
+def checkEmail(request):
+    email = request.GET.get('email')
+    if User.objects.filter(email=email).exists():
+        return HttpResponse(1)
+    else:
+        return HttpResponse(0)
+
+
 def register(request):
     if request.method == 'GET':
+        form = RegForm()
         request.session['login_from'] = request.META.get('HTTP_REFERER',
                                                          '/')
-        return render(request, 'register.html', locals())
+        return render(request, 'register.html', locals(), {'form': form})
+    elif request.method == 'POST':
+        form = RegForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['userName']
+            phoneNumber = form.cleaned_data['phoneNumber']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            captcha = form.cleaned_data['captcha']
+            if username != '' and password != '' and captcha == request.session['CheckCode'].lower():
+                if User.objects.filter(username=username).exists():
+                    errormsg = '用户名已存在'
+                elif User.objects.filter(email=email).exists():
+                    errormsg = '电子邮箱已存在'
+                else:
+                    user = User.objects.create_user(username=username, email=email, password=password)
+                    user.save()
+                    userProfile = UserProfile(user=user, telephone=phoneNumber)
+                    userProfile.save()
+                    user.backend = 'django.contrib.auth.backends.ModelBackend'
+                    login(request, user)
+                    return redirect(request.session['login_from'], '/')
+            elif captcha != request.session['CheckCode'].lower():
+                errormsg = '验证码错误'
+            return render(request, 'register.html', locals(), {'form': form})
+        else:
+            return render(request, 'register.html', {'form': form})

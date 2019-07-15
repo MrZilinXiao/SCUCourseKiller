@@ -16,7 +16,7 @@
     <link href={% static "css/animate.css"%} rel="stylesheet">
     <link href={% static "css/style.css"%} rel="stylesheet">
     <script>if(window.top !== window.self){ window.top.location = window.location;}</script>
-
+    <script src={% static "js/checkReg.js" %}></script>
 </head>
 
 <body class="gray-bg">
@@ -29,29 +29,70 @@
 
             </div>
             <h3>欢迎注册 SCUCourseKiller</h3>
-            <p>创建一个SCUCourseKiller新账户</p>
+            <p>创建一个 SCUCourseKiller新账户</p>
             <form class="m-t" role="form" action="{% url "register" %}" method='POST'>
                 {% csrf_token %}
-				<span style='color:red;'>{{ errormsg }}</span>
+				<span style='color:red;' id="doubleCheck"></span>
+                <span style='color:red;'>{{ errormsg }}</span>
 				<div class="form-group">
-                    <input type="text" class="form-control" name='username' placeholder="请输入用户名" required="">
+{#                    <input type="text" class="form-control" id="user_name" name='username' placeholder="请输入用户名" required="">#}
+                    {{ form.userName }}
+                    <span style='color:red;'>{{ form.errors.userName.0 }}</span>
+                    <span id="user_name_error"></span>
+
+    <script>
+        var user_name = document.getElementById('id_userName');
+        user_name.onblur = function () {
+            my_ajax('/checkUsername?userName='+user_name.value,function (data) {
+                if (data == "1"){
+                    document.getElementById('user_name_error').innerText="用户名已存在"
+                }else{
+                    document.getElementById('user_name_error').innerText="用户名可用"
+                }
+            })
+        };
+    </script>
                 </div>
 				<div class="form-group"> 
-                    <input type="email" class="form-control" name='email' id="inputEmail3" placeholder="电子邮箱"> 
+{#                    <input type="email" class="form-control" name='email' id="email" placeholder="电子邮箱">#}
+                    {{ form.email }}
+                    <span style='color:red;'>{{ form.errors.email.0 }}</span>
+                </div> 
+				<div class="form-group">
+                    {{ form.phoneNumber }}
+                    <span style='color:red;'>{{ form.errors.phoneNumber.0 }}</span>
                 </div> 
                 <div class="form-group">
-                    <input type="password" class="form-control" name = 'password' placeholder="请输入密码" required="">
+{#                    <input type="password" class="form-control" id = 'password' name = 'password' placeholder="请输入密码" required="" >#}
+                    {{ form.password }}
                 </div>
                 <div class="form-group">
-                    <input type="password" class="form-control" placeholder="请再次输入密码" required="">
+{#                    <input type="password" class="form-control" id = 'passwordTwice' placeholder="请再次输入密码" required="" onblur="validate()">#}
+                    {{ form.passwordTwice }}
                 </div>
 				<div class="form-group"> 
-                        <input type="text" class="form-control" placeholder="验证码" name="check_captcha"><img src="{% url "check_captcha" %}" onclick="ChangeCode(this);" title='点击换一张'/> 
+{#                        <input type="text" class="form-control" placeholder="验证码" name="check_captcha">#}
+                    {{ form.captcha }}
+                    <img src="{% url "check_captcha" %}" onclick="ChangeCode(this);" title='点击换一张'/>
                         <i class="fa fa-group"></i> 
                         <script> 
                         function ChangeCode(ths){ths.src = ths.src + '?'; } 
                         </script> 
                 </div>
+                  <script>
+          function validate() {
+              var pwd1 = document.getElementById("id_password").value;
+              var pwd2 = document.getElementById("id_passwordTwice").value;
+              if(pwd1 === pwd2) {
+    document.getElementById("doubleCheck").innerHTML="";
+                  document.getElementById("submit").disabled = false;
+              }
+              else {
+                  document.getElementById("doubleCheck").innerHTML="<font color='red'>两次输入的密码不相同</font>";
+                document.getElementById("submit").disabled = true;
+              }
+          }
+      </script>
                 <div class="form-group text-left">
                     <div class="checkbox i-checks">
                         <label class="no-padding">
@@ -59,9 +100,9 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary block full-width m-b">注 册</button>
+                <button type="submit" class="btn btn-primary block full-width m-b" id="submit">注 册</button>
 
-                <p class="text-muted text-center"><small>已经有账户了？</small><a href="login.html">点此登录</a>
+                <p class="text-muted text-center"><small>已经有账户了？</small><a href="login">点此登录</a>
                 </p>
 
             </form>

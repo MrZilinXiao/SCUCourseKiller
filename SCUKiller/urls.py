@@ -8,4 +8,5 @@ urlpatterns = [
     # url(r'^courseManagement/$', views.courseManagement, name="courseManagement"),
     # url(r'^accountManagement/$', views.accountManagement, name="accountManagement"),
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),
+    url(r'^checkUsername', views.checkUsername, name="checkUsername"),
 ]
