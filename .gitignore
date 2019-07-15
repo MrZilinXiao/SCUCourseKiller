@@ -3,6 +3,9 @@ __pycache__/
 .idea
 *.py[cod]
 *$py.class
+templates/css/*
+templates/fonts/*
+templates/js/*
 
 # C extensions
 *.so
