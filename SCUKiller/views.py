@@ -2,14 +2,14 @@ from django.shortcuts import render, HttpResponse, redirect
 
 from django.contrib.auth import login
 from .models import UserProfile, User
-from .forms import RegForm
+from .forms import RegForm, LoginForm
+from django.contrib.auth import authenticate
 
 
 # Create your views here.
 def check_captcha(request):
     import io
     from . import check_captcha as CheckCode
-
     stream = io.BytesIO()
     # img 图片对象, code 在图像中写的内容
     img, code = CheckCode.create_validate_code()
@@ -43,6 +43,7 @@ def register(request):
         return render(request, 'register.html', locals(), {'form': form})
     elif request.method == 'POST':
         form = RegForm(request.POST)
+        errormsg = ''
         if form.is_valid():
             username = form.cleaned_data['userName']
             phoneNumber = form.cleaned_data['phoneNumber']
@@ -67,3 +68,36 @@ def register(request):
             return render(request, 'register.html', locals(), {'form': form})
         else:
             return render(request, 'register.html', {'form': form})
+
+
+def logIn(request):
+    if request.user.is_authenticated:
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+    if request.method == 'GET':
+        form = LoginForm()
+        request.session['login_from'] = request.META.get('HTTP_REFERER',
+                                                         '/')
+        return render(request, 'login.html', locals(), {'form': form})
+    elif request.method == 'POST':
+        form = LoginForm(request.POST)
+        errormsg = ''
+        if form.is_valid():
+            username = form.cleaned_data['userName'].strip()
+            password = form.cleaned_data['password']
+            captcha = form.cleaned_data['captcha'].strip()
+            if username != '' and password != '' and captcha == request.session['CheckCode'].lower():
+                user = authenticate(username=username, password=password)
+                print(user)
+                if user is not None:
+                    login(request, user)
+                    print("登录成功！")
+                    return redirect(request.session['login_from'])
+                elif captcha != request.session['CheckCode'].lower():
+                    errormsg = "验证码错误"
+                else:
+                    errormsg = "用户名或密码错误"
+            elif username == '' or password == '':
+                errormsg = "用户名或密码不能为空"
+            else:
+                errormsg = "其他错误"
+        return render(request, 'login.html', locals())
