@@ -1,6 +1,6 @@
 from django.shortcuts import render, HttpResponse, redirect
 
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from .models import UserProfile, User
 from .forms import RegForm, LoginForm
 from django.contrib.auth import authenticate
@@ -40,34 +40,37 @@ def register(request):
         form = RegForm()
         request.session['login_from'] = request.META.get('HTTP_REFERER',
                                                          '/')
-        return render(request, 'register.html', locals(), {'form': form})
+        return render(request, 'register.html', locals())
     elif request.method == 'POST':
-        form = RegForm(request.POST)
-        errormsg = ''
-        if form.is_valid():
-            username = form.cleaned_data['userName']
-            phoneNumber = form.cleaned_data['phoneNumber']
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-            captcha = form.cleaned_data['captcha']
-            if username != '' and password != '' and captcha == request.session['CheckCode'].lower():
-                if User.objects.filter(username=username).exists():
-                    errormsg = '用户名已存在'
-                elif User.objects.filter(email=email).exists():
-                    errormsg = '电子邮箱已存在'
-                else:
-                    user = User.objects.create_user(username=username, email=email, password=password)
-                    user.save()
-                    userProfile = UserProfile(user=user, telephone=phoneNumber)
-                    userProfile.save()
-                    user.backend = 'django.contrib.auth.backends.ModelBackend'
-                    login(request, user)
-                    return redirect(request.session['login_from'], '/')
-            elif captcha != request.session['CheckCode'].lower():
-                errormsg = '验证码错误'
-            return render(request, 'register.html', locals(), {'form': form})
+        if not request.user.is_authenticated:
+            form = RegForm(request.POST)
+            errormsg = ''
+            if form.is_valid():
+                username = form.cleaned_data['userName']
+                phoneNumber = form.cleaned_data['phoneNumber']
+                email = form.cleaned_data['email']
+                password = form.cleaned_data['password']
+                captcha = form.cleaned_data['captcha']
+                if username != '' and password != '' and captcha == request.session['CheckCode'].lower():
+                    if User.objects.filter(username=username).exists():
+                        errormsg = '用户名已存在'
+                    elif User.objects.filter(email=email).exists():
+                        errormsg = '电子邮箱已存在'
+                    else:
+                        user = User.objects.create_user(username=username, email=email, password=password)
+                        user.save()
+                        userProfile = UserProfile(user=user, telephone=phoneNumber)
+                        userProfile.save()
+                        user.backend = 'django.contrib.auth.backends.ModelBackend'
+                        login(request, user)
+                        return redirect(request.session['login_from'], '/')
+                elif captcha != request.session['CheckCode'].lower():
+                    errormsg = '验证码错误'
+                return render(request, 'register.html', locals(), {'form': form})
+            else:
+                return render(request, 'register.html', {'form': form})
         else:
-            return render(request, 'register.html', {'form': form})
+            return redirect('index')
 
 
 def logIn(request):
@@ -77,7 +80,7 @@ def logIn(request):
         form = LoginForm()
         request.session['login_from'] = request.META.get('HTTP_REFERER',
                                                          '/')
-        return render(request, 'login.html', locals(), {'form': form})
+        return render(request, 'login.html', locals())
     elif request.method == 'POST':
         form = LoginForm(request.POST)
         errormsg = ''
@@ -101,3 +104,18 @@ def logIn(request):
             else:
                 errormsg = "其他错误"
         return render(request, 'login.html', locals())
+
+
+def logOut(request):
+    try:
+        logout(request)
+    except Exception as e:
+        print(e)
+    return redirect(request.META['HTTP_REFERER'])
+
+
+def index(request):
+    if request.user.is_authenticated:
+        pass
+    else:
+        return redirect('login')
