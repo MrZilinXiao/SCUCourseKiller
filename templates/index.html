@@ -40,7 +40,7 @@
                                 </span>
                             </a>
                         </div>
-                        <div class="logo-element">SCUCourseKiller
+                        <div class="logo-element">SCU
                         </div>
                     </li>
 
@@ -58,9 +58,9 @@
                     </li>
                     <li>
                         <a href={% url 'notification' %}><i class="fa fa-envelope"></i> <span class="nav-label">通知 </span>
-                        {if notifications != 0}
-                            <span class="label label-warning pull-right">{{ notifications }}</span>
-                            {endif}
+                        {% if isNotified %}
+                            <span class="label label-warning pull-right">{{ notificationsCnt }}</span>
+                        {% endif %}
                         </a>
                     </li>
                     <li>
@@ -113,6 +113,10 @@
                                 </li>
                             </ul>
                         </li>
+                        <button type="button" class="btn btn-w-m btn-default">欢迎您，{{ username }}！</button>
+                        <a href={% url 'logout'%}>
+                        <button type="button" class="btn btn-w-m btn-danger">注销</button>
+                        </a>
                     </ul>
                 </nav>
             </div>

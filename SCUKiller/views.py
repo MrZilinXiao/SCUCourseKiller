@@ -1,9 +1,10 @@
 from django.shortcuts import render, HttpResponse, redirect
 
 from django.contrib.auth import login, logout
-from .models import UserProfile, User
+from .models import UserProfile, User, notification
 from .forms import RegForm, LoginForm
 from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
@@ -114,8 +115,21 @@ def logOut(request):
     return redirect(request.META['HTTP_REFERER'])
 
 
+def notification(request):
+    pass
+
+
+@login_required
 def index(request):
     if request.user.is_authenticated:
-        pass
+        user = request.user
+        username = user.username
+        UserQ = User.objects.get(username=username)
+        notificationsCnt = len(UserQ.notificationHost.all())
+        isNotified = False
+        if notificationsCnt != 0:
+            isNotified = True
+
+        return render(request, 'index.html', locals())
     else:
         return redirect('login')
