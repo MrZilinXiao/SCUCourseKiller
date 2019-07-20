@@ -9,9 +9,10 @@ from django.contrib.auth.models import User
 class UserProfile(models.Model):
     uid = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='UserProfile', unique=True)
-    telephone = models.CharField('电话', max_length=50, blank=True)
+    telephone = models.CharField('电话', max_length=11, blank=True)
     regTime = models.DateTimeField('注册时间', auto_now_add=True)
-    courseCnt = models.IntegerField('已添加课程', default=0)
+    points = models.FloatField('点数', default=10.0)
+    courseCnt = models.IntegerField('已添加课程数目', default=0)
     courseRemainingCnt = models.IntegerField('剩余课程权限', default=0)
 
     # 剩余抢课权限
@@ -36,21 +37,24 @@ class jwcAccount(models.Model):
         return self.jwcNumber
 
 
-class coursesWatching(models.Model):
+class courses(models.Model):
     host = models.ForeignKey(UserProfile, related_name='coursesHost', on_delete=models.DO_NOTHING)
-    courseName = models.CharField(verbose_name='courseName', max_length=100, default='')
+    status = models.CharField(verbose_name='status', max_length=100, default='等待中')
+    # 等待中 运行中 已完成 出错
+    kcm = models.CharField(verbose_name='kcm', max_length=100, default='')
     kch = models.CharField(verbose_name='kch', max_length=100, default='')
     kxh = models.CharField(verbose_name='kxh', max_length=100, default='')
-    startTime = models.DateTimeField('startTime', auto_now_add=True)
+    addTime = models.DateTimeField('addTime', auto_now_add=True)
     attempts = models.IntegerField(verbose_name="attempts", default=0)
     isSuccess = models.BooleanField(verbose_name='isSuccess', default=False)
 
     class Meta:
-        verbose_name = "coursesWatching"
+        verbose_name = "courses"
 
 
 class notification(models.Model):
     host = models.ForeignKey(User, related_name='notificationHost', on_delete=models.DO_NOTHING)
     title = models.CharField('notificationTitle', max_length=100)
     content = models.TextField('notificationContent')
+    notiTime = models.DateTimeField('通知时间', auto_now_add=True)
     isRead = models.BooleanField('isRead', default=False)

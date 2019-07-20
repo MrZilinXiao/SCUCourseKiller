@@ -1,7 +1,7 @@
 from django.shortcuts import render, HttpResponse, redirect
 
 from django.contrib.auth import login, logout
-from .models import UserProfile, User, notification
+from .models import UserProfile, User, notification as noti, courses
 from .forms import RegForm, LoginForm
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
@@ -59,12 +59,11 @@ def register(request):
                         errormsg = '电子邮箱已存在'
                     else:
                         user = User.objects.create_user(username=username, email=email, password=password)
-                        user.save()
                         userProfile = UserProfile(user=user, telephone=phoneNumber)
                         userProfile.save()
                         user.backend = 'django.contrib.auth.backends.ModelBackend'
                         login(request, user)
-                        return redirect(request.session['login_from'], '/')
+                        return redirect('index')
                 elif captcha != request.session['CheckCode'].lower():
                     errormsg = '验证码错误'
                 return render(request, 'register.html', locals(), {'form': form})
@@ -115,8 +114,18 @@ def logOut(request):
     return redirect(request.META['HTTP_REFERER'])
 
 
+@login_required
 def notification(request):
-    pass
+    if request.user.is_authenticated:
+        user = request.user
+        username = user.username
+        UserQ = User.objects.get(username=username)
+        notifications = noti.objects.filter(host=user)
+        notificationsCnt = len(notifications)
+
+        return render(request, 'notification.html', locals())
+    else:
+        return redirect('login')
 
 
 @login_required
@@ -133,3 +142,27 @@ def index(request):
         return render(request, 'index.html', locals())
     else:
         return redirect('login')
+
+
+@login_required
+def inner_index(request):
+    if request.user.is_authenticated:
+        user = request.user
+        username = user.username
+        UserQ = User.objects.get(username=username)
+        points = UserQ.UserProfile.points
+        courseCnt = UserQ.UserProfile.courseCnt
+        courseRemainingCnt = UserQ.UserProfile.courseRemainingCnt
+        Courses = courses.objects.filter(host=UserQ.UserProfile).order_by('addTime')[:4]
+
+        return render(request, 'index_v1.html', locals())
+    else:
+        return redirect('login')
+
+
+def courseManagement(request):
+    return None
+
+
+def accountManagement(request):
+    return None

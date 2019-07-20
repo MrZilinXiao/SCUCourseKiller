@@ -22,6 +22,7 @@
 </head>
 
 <body class="fixed-sidebar full-height-layout gray-bg" style="overflow:hidden">
+
     <div id="wrapper">
         <!--左侧导航开始-->
         <nav class="navbar-default navbar-static-side" role="navigation">
@@ -45,7 +46,7 @@
                     </li>
 
                     <li>
-                        <a class="J_menuItem" href={% url 'index' %}>
+                        <a class="J_menuItem" href={% url 'inner_index' %}>
                             <i class="fa fa-home"></i>
                             <span class="nav-label">主页</span>
                         </a>
@@ -57,7 +58,7 @@
                         <span class="ng-scope">分类</span>
                     </li>
                     <li>
-                        <a href={% url 'notification' %}><i class="fa fa-envelope"></i> <span class="nav-label">通知 </span>
+                        <a class="J_menuItem" href={% url 'notification' %}><i class="fa fa-envelope"></i> <span class="nav-label">通知 </span>
                         {% if isNotified %}
                             <span class="label label-warning pull-right">{{ notificationsCnt }}</span>
                         {% endif %}
@@ -86,28 +87,17 @@
                     <ul class="nav navbar-top-links navbar-right">
                         <li class="dropdown">
                             <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                                <i class="fa fa-envelope"></i>
+                                {% if isNotified %}
+                            <span class="label label-warning">{{ notificationsCnt }}</span>
+                        {% endif %}
                             </a>
                             <ul class="dropdown-menu dropdown-messages">
 
                                 <li>
                                     <div class="text-center link-block">
-                                        <a class="J_menuItem" href="mailbox.html">
+                                        <a class="J_menuItem" href={% url 'notification' %}>
                                             <i class="fa fa-envelope"></i> <strong> 查看所有消息</strong>
-                                        </a>
-                                    </div>
-                                </li>
-                            </ul>
-                        </li>
-                        <li class="dropdown">
-                            <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
-                            </a>
-                            <ul class="dropdown-menu dropdown-alerts">
-                                <li>
-                                    <a href="mailbox.html">
-                                    </a>
-                                <li>
-                                    <div class="text-center link-block">
-                                        <a class="J_menuItem" href="notifications.html">
                                         </a>
                                     </div>
                                 </li>
@@ -120,7 +110,9 @@
                     </ul>
                 </nav>
             </div>
-
+            <div class="row J_mainContent" id="content-main">
+                <iframe id="J_iframe" width="100%" height="100%" src={% url 'inner_index' %} frameborder="0" data-id={% url 'inner_index' %} seamless></iframe>
+            </div>
         </div>
         <!--右侧部分结束-->
     </div>

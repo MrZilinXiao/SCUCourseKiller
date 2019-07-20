@@ -1,0 +1,94 @@
+{% load staticfiles %}<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <title>SCUKiller - 通知</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href={% static "css/bootstrap.min.css"%} rel="stylesheet">
+    <link href={% static "css/font-awesome.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/iCheck/custom.css"%} rel="stylesheet">
+    <link href={% static "css/animate.css"%} rel="stylesheet">
+    <link href={% static "css/style.css"%} rel="stylesheet">
+
+</head>
+
+<body class="gray-bg">
+    <div class="wrapper wrapper-content">
+        <div class="row">
+            <div class="col-sm-9 animated fadeInRight">
+                <div class="mail-box-header">
+                    <h2>
+                    通知（{{ notificationsCnt }}）
+                </h2>
+                    <div class="mail-tools tooltip-demo m-t-md">
+                        <div class="btn-group pull-right">
+                            <button class="btn btn-white btn-sm"><i class="fa fa-arrow-left"></i>
+                            </button>
+                            <button class="btn btn-white btn-sm"><i class="fa fa-arrow-right"></i>
+                            </button>
+
+                        </div>
+                        <button class="btn btn-white btn-sm" data-toggle="tooltip" data-placement="left" title="刷新邮件列表"><i class="fa fa-refresh"></i> 刷新</button>
+
+                    </div>
+                </div>
+                <div class="mail-box">
+
+                    <table class="table table-hover table-mail">
+                        <tbody>
+                        {% if notifications %}
+                            {% for item in notifications %}
+                            <tr class="{% if item.isRead %}read{% else %}unread{% endif %}">
+                                <td class="check-mail">
+                                    <input type="checkbox" class="i-checks">
+                                </td>
+                                <td class="mail-ontact"><a href="mail_detail.html">{{ item.title }}</a>
+                                </td>
+                                <td class="mail-subject"><a href="mail_detail.html">{{ item.content }}</a>
+                                </td>
+                                <td class=""><i class="fa fa-paperclip"></i>
+                                </td>
+                                <td class="text-right mail-date">{{ item.notiTime }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                        </tbody>
+                    </table>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 全局js -->
+    <script src={% static "js/jquery.min.js"%}></script>
+    <script src={% static "js/bootstrap.min.js"%}></script>
+
+    <!-- 自定义js -->
+    <script src={% static "js/content.js" %}></script>
+
+
+    <!-- iCheck -->
+    <script src={% static "js/plugins/iCheck/icheck.min.js" %}></script>
+    <script>
+        $(document).ready(function () {
+            $('.i-checks').iCheck({
+                checkboxClass: 'icheckbox_square-green',
+                radioClass: 'iradio_square-green',
+            });
+        });
+    </script>
+
+</body>
+
+</html>

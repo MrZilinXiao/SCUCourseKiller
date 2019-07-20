@@ -5,4 +5,4 @@ from .models import *
 
 admin.site.register(UserProfile, )
 admin.site.register(jwcAccount, )
-admin.site.register(coursesWatching, )
+admin.site.register(courses, )

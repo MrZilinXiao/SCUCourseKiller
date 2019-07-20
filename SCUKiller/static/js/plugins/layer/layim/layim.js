@@ -10,8 +10,8 @@
 ;!function(win, undefined){
 
 var config = {
-    msgurl: 'mailbox.html?msg=',
-    chatlogurl: 'mailbox.html?user=',
+    msgurl: 'notification.html?msg=',
+    chatlogurl: 'notification.html?user=',
     aniTime: 200,
     right: -232,
     api: {
