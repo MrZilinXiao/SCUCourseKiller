@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^notification/$', views.notification, name="notification"),
     url(r'^courseManagement/$', views.courseManagement, name="courseManagement"),
     url(r'^accountManagement/$', views.accountManagement, name="accountManagement"),
+    url(r'^addCourse$', views.addCourse, name="addCourse"),
 
 
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),

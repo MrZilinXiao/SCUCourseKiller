@@ -28,7 +28,7 @@ class jwcAccount(models.Model):
     jwcNumber = models.CharField('学号', max_length=100)
     jwcPasswd = models.CharField('密码', max_length=256)
     jwcCookie = models.CharField('Cookie', max_length=256)
-    jwcBelongto = models.OneToOneField("UserProfile", to_field="uid", on_delete=models.DO_NOTHING)
+    jwcBelongto = models.OneToOneField("UserProfile", to_field="uid", on_delete=models.DO_NOTHING, related_name="Belongto")
 
     class Meta:
         verbose_name = '教务处账号信息'
@@ -38,6 +38,7 @@ class jwcAccount(models.Model):
 
 
 class courses(models.Model):
+    cid = models.AutoField(primary_key=True)
     host = models.ForeignKey(UserProfile, related_name='coursesHost', on_delete=models.DO_NOTHING)
     status = models.CharField(verbose_name='状态', max_length=100, default='等待中')
     # 等待中 运行中 已完成 出错
@@ -58,6 +59,5 @@ class notification(models.Model):
     content = models.TextField('通知内容')
     notiTime = models.DateTimeField('通知时间', auto_now_add=True)
     isRead = models.BooleanField('是否阅读', default=False)
-
     class Meta:
         verbose_name = "通知"

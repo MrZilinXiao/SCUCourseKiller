@@ -73,3 +73,13 @@ class LoginForm(forms.Form):
         except Exception as e:
             print('Error when login: ' + str(e))
             raise forms.ValidationError(u"用户名或密码不符合格式")
+
+
+class AddCourseForm(forms.Form):
+    kch = forms.CharField(label='kch', max_length=9, error_messages={'required': '课程号不能为空'},
+                          widget=forms.TextInput(attrs={'class': 'form-control',
+                                                        'placeholder': '请输入9位课程号',
+                                                        'autofocus': ''}))
+    kxh = forms.CharField(label='kxh', max_length=3, error_messages={'required': '课序号不能为空'},
+                          widget=forms.TextInput(attrs={'class': 'form-control',
+                                                        'placeholder': '请输入课序号'}))

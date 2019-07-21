@@ -2,7 +2,7 @@ from django.shortcuts import render, HttpResponse, redirect
 
 from django.contrib.auth import login, logout
 from .models import UserProfile, User, notification as noti, courses
-from .forms import RegForm, LoginForm
+from .forms import RegForm, LoginForm, AddCourseForm
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 
@@ -147,22 +147,52 @@ def index(request):
 @login_required
 def inner_index(request):
     if request.user.is_authenticated:
-        user = request.user
-        username = user.username
-        UserQ = User.objects.get(username=username)
+        # user = request.user
+        # username = user.username
+        UserQ = User.objects.get(username=request.user.username)
         points = UserQ.UserProfile.points
         courseCnt = UserQ.UserProfile.courseCnt
         courseRemainingCnt = UserQ.UserProfile.courseRemainingCnt
         Courses = courses.objects.filter(host=UserQ.UserProfile).order_by('addTime')[:4]
-
         return render(request, 'index_v1.html', locals())
     else:
         return redirect('login')
 
 
+@login_required
+def addCourse(request):
+    if request.method == 'POST':
+        # notice = ''
+        form = AddCourseForm(request.POST)
+        if form.is_valid():
+            kch = form.cleaned_data['kch']
+            kxh = form.cleaned_data['kxh']
+            notice = '课程添加成功！'  # TODO: Need to verify whether it is a vaild course
+            course = courses(kch=kch, kxh=kxh)
+            course.save()
+        else:
+            notice = '课程添加错误'
+        return render(request, 'courseManagement.html', {'notice': notice})
+
+
+@login_required
 def courseManagement(request):
-    return None
+    if request.user.is_authenticated:
+        cidDel = request.GET.get("del")
+        notice = ''
+        if cidDel is not None:
+            CourseQ = courses.objects.get(cid=cidDel)
+            notice = "课程《" + CourseQ.kcm + "》已被成功删除"
+            CourseQ.delete()
+            return render(request, 'courseManagement.html', {'notice': notice})
+        form = AddCourseForm()
+        UserQ = User.objects.get(username=request.user.username)
+        Courses = UserQ.UserProfile.coursesHost.all()
+        return render(request, 'courseManagement.html', locals())
+    else:
+        return redirect('login')
 
 
+@login_required
 def accountManagement(request):
     return None
