@@ -18,20 +18,20 @@ class UserProfile(models.Model):
     # 剩余抢课权限
 
     class Meta:
-        verbose_name = 'User Profile'
+        verbose_name = '用户个人信息'
 
     def __str__(self):
         return self.user.__str__()
 
 
 class jwcAccount(models.Model):
-    jwcNumber = models.CharField('jwcNumber', max_length=100)
-    jwcPasswd = models.CharField('jwcPasswd', max_length=256)
-    jwcCookie = models.CharField('jwcCookie', max_length=256)
+    jwcNumber = models.CharField('学号', max_length=100)
+    jwcPasswd = models.CharField('密码', max_length=256)
+    jwcCookie = models.CharField('Cookie', max_length=256)
     jwcBelongto = models.OneToOneField("UserProfile", to_field="uid", on_delete=models.DO_NOTHING)
 
     class Meta:
-        verbose_name = 'jwcAccount'
+        verbose_name = '教务处账号信息'
 
     def __str__(self):
         return self.jwcNumber
@@ -39,22 +39,25 @@ class jwcAccount(models.Model):
 
 class courses(models.Model):
     host = models.ForeignKey(UserProfile, related_name='coursesHost', on_delete=models.DO_NOTHING)
-    status = models.CharField(verbose_name='status', max_length=100, default='等待中')
+    status = models.CharField(verbose_name='状态', max_length=100, default='等待中')
     # 等待中 运行中 已完成 出错
-    kcm = models.CharField(verbose_name='kcm', max_length=100, default='')
-    kch = models.CharField(verbose_name='kch', max_length=100, default='')
-    kxh = models.CharField(verbose_name='kxh', max_length=100, default='')
-    addTime = models.DateTimeField('addTime', auto_now_add=True)
-    attempts = models.IntegerField(verbose_name="attempts", default=0)
-    isSuccess = models.BooleanField(verbose_name='isSuccess', default=False)
+    kcm = models.CharField(verbose_name='课程名', max_length=100, default='')
+    kch = models.CharField(verbose_name='课程号', max_length=100, default='')
+    kxh = models.CharField(verbose_name='课序号', max_length=100, default='')
+    addTime = models.DateTimeField('添加时间', auto_now_add=True)
+    attempts = models.IntegerField(verbose_name="尝试次数", default=0)
+    isSuccess = models.BooleanField(verbose_name='是否成功', default=False)
 
     class Meta:
-        verbose_name = "courses"
+        verbose_name = "课程信息"
 
 
 class notification(models.Model):
     host = models.ForeignKey(User, related_name='notificationHost', on_delete=models.DO_NOTHING)
-    title = models.CharField('notificationTitle', max_length=100)
-    content = models.TextField('notificationContent')
+    title = models.CharField('通知标题', max_length=100)
+    content = models.TextField('通知内容')
     notiTime = models.DateTimeField('通知时间', auto_now_add=True)
-    isRead = models.BooleanField('isRead', default=False)
+    isRead = models.BooleanField('是否阅读', default=False)
+
+    class Meta:
+        verbose_name = "通知"
