@@ -24,7 +24,7 @@ def valjwcAccount(stuID, stuPass):
     loginRequest = request.Request(login_url, login_data_parsed, headers=headers)
     try:
         loginResponse = opener.open(loginRequest)
-        return cookie_support
+        return str(cookie)
     except error.HTTPError as e:
         print(e)
         raise Exception("Invalid Login Info")

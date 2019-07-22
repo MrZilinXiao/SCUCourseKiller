@@ -12,7 +12,8 @@ urlpatterns = [
     url(r'^courseManagement/$', views.courseManagement, name="courseManagement"),
     url(r'^accountManagement/$', views.accountManagement, name="accountManagement"),
     url(r'^addCourse$', views.addCourse, name="addCourse"),
-    url(r'^addjwcAccount$', views.addjwcAccount, name="addjwcAccount"),
+    url(r'^jwcAccount$', views.jwcAccount, name="jwcAccount"),
+    url(r'^deljwcAccount$', views.deljwcAccount, name="deljwcAccount"),
 
 
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),

@@ -99,7 +99,7 @@
                             <a class="collapse-link">
                                 <i class="fa fa-chevron-up"></i>
                             </a>
-                            <a class="dropdown-toggle" data-toggle="dropdown" href="form_basic.html#">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="bindjwcAccount.html#">
                                 <i class="fa fa-wrench"></i>
                             </a>
                             <a class="close-link">
@@ -113,6 +113,11 @@
                             {% if errormsg %}
                             <span style='color:red;'>{{ errormsg }}</span>
                             {%  endif %}
+                            {% if form.non_field_errors %}
+                    {% for item in form.non_field_errors %}
+                    <span style='color:red;'>{{ item }}</span>
+                    {% endfor %}
+                        {% endif %}
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">课程类型：</label>
                                 <div class="col-sm-8">

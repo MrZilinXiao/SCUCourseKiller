@@ -2,9 +2,12 @@ from django.shortcuts import render, HttpResponse, redirect
 
 from django.contrib.auth import login, logout
 from .models import UserProfile, User, notification as noti, courses
-from .forms import RegForm, LoginForm, AddCourseForm
+from .forms import RegForm, LoginForm, AddCourseForm, AddjwcAccount
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
+
+from . import jwcAccount as jwcVal
+from .models import jwcAccount as jwcModel
 
 
 # Create your views here.
@@ -193,8 +196,48 @@ def addCourse(request):
 
 
 @login_required
-def addjwcAccount(request):
-    pass
+def jwcAccount(request):
+    if request.user.is_authenticated:
+        if request.method == 'GET':
+            UserQ = User.objects.get(username=request.user.username)
+            userprofile = UserQ.UserProfile
+            try:
+                jwcaccount = userprofile.jwcHost
+            except Exception as e:
+                print(e)
+                jwcaccount = None
+            if jwcaccount is None:  # 尚未绑定教务处账号
+                form = AddjwcAccount(request.POST)
+                return render(request, 'bindjwcAccount.html', locals())
+            else:  # 已绑定教务处账号
+                return render(request, 'jwcAccount.html', locals())
+        elif request.method == 'POST':
+            form = AddjwcAccount(request.POST)
+            if form.is_valid():
+                try:
+                    stuID = form.cleaned_data["stuID"].strip()
+                    stuPass = form.cleaned_data["stuPass"].strip()
+                    if len(stuID) != 13:
+                        raise Exception("学号不足13位！")
+                    stuQuery = jwcModel.objects.filter(jwcNumber=stuID)
+                    if stuQuery:
+                        raise Exception("学号已存在！")
+                    try:
+                        cookie = jwcVal.valjwcAccount(stuID, stuPass)
+                        user = User.objects.get(username=request.user.username)
+                        jwc = jwcModel(jwcNumber=stuID, jwcPasswd=stuPass, userprofile=user.UserProfile, jwcCookie=cookie)
+                        jwc.save()  # TODO: verify if this is working
+                        return redirect('jwcAccount')
+                    except Exception as e:
+                        errormsg = "学号或密码错误！"
+                except Exception as e:
+                    errormsg = e
+                return render(request, 'jwcAccount.html', locals())
+            else:
+                errormsg = "表单验证未通过！"
+                return render(request, 'bindjwcAccount.html', {'form': form, 'errormsg': errormsg})  # 表单clean验证未通过
+    else:
+        return redirect('login')
 
 
 @login_required
@@ -220,3 +263,24 @@ def courseManagement(request):
 @login_required
 def accountManagement(request):
     return None
+
+
+def deljwcAccount(request):
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            delNumber = request.POST.get('delNumber')
+            jwcAcc = jwcModel.objects.get(jwcNumber=delNumber)
+            try:
+                if not jwcAcc:
+                    raise Exception("删除的学号不存在！")
+                if request.user.username != jwcAcc.userprofile.user.username:
+                    raise Exception("你欲删除的学号不属于你！")
+                jwcAcc.delete()
+                errormsg = "解绑成功！"
+                form = AddjwcAccount()
+                return render(request, 'bindjwcAccount.html', locals())
+            except Exception as e:
+                errormsg = e
+                return render(request, 'jwcAccount.html', locals())
+    else:
+        return redirect('login')

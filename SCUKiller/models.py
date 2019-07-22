@@ -20,15 +20,12 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = '用户个人信息'
 
-    def __str__(self):
-        return self.user.__str__()
-
 
 class jwcAccount(models.Model):
     jwcNumber = models.CharField('学号', max_length=100)
     jwcPasswd = models.CharField('密码', max_length=256)
     jwcCookie = models.CharField('Cookie', max_length=256)
-    jwcBelongto = models.OneToOneField("UserProfile", to_field="uid", on_delete=models.DO_NOTHING, related_name="Belongto")
+    userprofile = models.OneToOneField(UserProfile, primary_key=True, on_delete=models.DO_NOTHING, related_name="jwcHost")
 
     class Meta:
         verbose_name = '教务处账号信息'
@@ -61,5 +58,6 @@ class notification(models.Model):
     content = models.TextField('通知内容')
     notiTime = models.DateTimeField('通知时间', auto_now_add=True)
     isRead = models.BooleanField('是否阅读', default=False)
+
     class Meta:
         verbose_name = "通知"

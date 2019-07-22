@@ -1,10 +1,7 @@
 from django import forms
 from .models import UserProfile, User
 import re
-from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
-from . import jwcAccount
-from .models import jwcAccount as jwcModel
 
 
 class RegForm(forms.Form):
@@ -105,22 +102,24 @@ class AddjwcAccount(forms.Form):
                               widget=forms.PasswordInput(attrs={'class': 'form-control',
                                                                 'placeholder': '密码'}))
 
-    def __init__(self, username):
-        super().__init__()
-        self.username = username
-
-    def clean(self):
-        try:
-            stuID = self.cleaned_data["stuID"].strip()
-            stuPass = self.cleaned_data["stuPass"].strip()
-            try:
-                cookie = jwcAccount.valjwcAccount(stuID, stuPass)
-                user = User.objects.get(username=self.username)
-                jwc = jwcModel(jwcNumber=stuID, jwcPasswd=stuPass, jwcBelongto=user.UserProfile, jwcCookie=cookie)
-                jwc.save()  # TODO: verify if this is working
-            except Exception as e:
-                print(e)
-                raise forms.ValidationError("登录失败！")
-        except Exception as e:
-            print(e)
-            raise forms.ValidationError("学号或密码格式出错！")
+    # def __init__(self, username):
+    #     super().__init__()
+    #     self.username = username
+    #
+    # def clean(self):
+    #     try:
+    #         stuID = self.cleaned_data["stuID"].strip()
+    #         stuPass = self.cleaned_data["stuPass"].strip()
+    #         if len(stuID) != 13:
+    #             raise forms.ValidationError(u"学号不满足13位长度要求！")
+    #         try:
+    #             cookie = jwcAccount.valjwcAccount(stuID, stuPass)
+    #             user = User.objects.get(username=self.username)
+    #             jwc = jwcModel(jwcNumber=stuID, jwcPasswd=stuPass, jwcBelongto=user.UserProfile, jwcCookie=cookie)
+    #             jwc.save()  # TODO: verify if this is working
+    #         except Exception as e:
+    #             print(e)
+    #             raise forms.ValidationError(u"登录失败！")
+    #     except Exception as e:
+    #         print(e)
+    #         raise forms.ValidationError(u"学号或密码格式出错！")
