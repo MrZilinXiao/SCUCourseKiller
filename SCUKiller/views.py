@@ -162,31 +162,55 @@ def inner_index(request):
 @login_required
 def addCourse(request):
     if request.method == 'POST':
-        # notice = ''
         form = AddCourseForm(request.POST)
         if form.is_valid():
+            UserQ = User.objects.get(username=request.user.username)
+            keyword = form.cleaned_data['keyword']
             kch = form.cleaned_data['kch']
             kxh = form.cleaned_data['kxh']
+            type = form.cleaned_data['type']
+            if type == '1':
+                ctype = "自由选课"
+            elif type == '2':
+                ctype = "方案选课"
+            else:
+                ctype = "其他选课"
+            find_same = courses.objects.filter(kch=kch, kxh=kxh)
+            if find_same:
+                for item in find_same:
+                    if item.status != '已完成':
+                        notice = '系统中有相同的课程未完成！'
+                        Courses = UserQ.UserProfile.coursesHost.all()
+                        return render(request, 'courseManagement.html', locals())
+            host = UserQ.UserProfile
             notice = '课程添加成功！'  # TODO: Need to verify whether it is a vaild course
-            course = courses(kch=kch, kxh=kxh)
+            course = courses(kch=kch, kxh=kxh, keyword=keyword, host=host, type=ctype)
             course.save()
+            Courses = UserQ.UserProfile.coursesHost.all()
         else:
-            notice = '课程添加错误'
-        return render(request, 'courseManagement.html', {'notice': notice})
+            notice = '提交的课程信息不合法！'
+        return render(request, 'courseManagement.html', locals())
+
+
+@login_required
+def addjwcAccount(request):
+    pass
 
 
 @login_required
 def courseManagement(request):
     if request.user.is_authenticated:
+        UserQ = User.objects.get(username=request.user.username)
+        form = AddCourseForm()
         cidDel = request.GET.get("del")
         notice = ''
         if cidDel is not None:
             CourseQ = courses.objects.get(cid=cidDel)
             notice = "课程《" + CourseQ.kcm + "》已被成功删除"
             CourseQ.delete()
-            return render(request, 'courseManagement.html', {'notice': notice})
-        form = AddCourseForm()
-        UserQ = User.objects.get(username=request.user.username)
+            Courses = UserQ.UserProfile.coursesHost.all()
+            return render(request, 'courseManagement.html', locals())
+
         Courses = UserQ.UserProfile.coursesHost.all()
         return render(request, 'courseManagement.html', locals())
     else:

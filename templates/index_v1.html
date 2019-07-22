@@ -7,9 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!--360浏览器优先以webkit内核解析-->
-
-
-    <title>SCUCourseKiller - 主页示例</title>
+    <title>SCUCourseKiller - 内部主页</title>
 
     <link rel="shortcut icon" href="favicon.ico"> <link href={% static "css/bootstrap.min.css"%}  rel="stylesheet">
     <link href={% static "css/font-awesome.css" %} rel="stylesheet">
@@ -55,7 +53,7 @@
                             <div class="ibox-title">
                                 <h5>所有课程</h5>
                                 <div class="ibox-tools">
-                                    <a href={% url 'courseManagement' %} class="btn btn-primary btn-xs">加入新课程</a>
+                                    <a href="{% url 'courseManagement' %}" class="btn btn-primary btn-xs">加入新课程</a>
                                 </div>
                             </div>
                             <div class="ibox-content">
@@ -74,14 +72,13 @@
                                                     <span class="label label-primary">{{ item.status }}
                                                 </span></td>
                                                 <td class="project-title">
-                                                    <a href="project_detail.html">{{ item.kcm }}</a>
+                                                    <a href="project_detail.html">[{{ item.kch }}]{{ item.kcm }}</a>
                                                     <br>
-                                                    <small>创建于 {{ addTime }}</small>
+                                                    <small>创建于 {{ item.addTime }}</small>
                                                 </td>
 
                                                 <td class="project-actions">
-                                                    <a href="projects.html#" class="btn btn-white btn-sm"><i class="fa fa-folder"></i> 查看 </a>
-                                                    <a href="projects.html#" class="btn btn-white btn-sm"><i class="fa fa-pencil"></i> 编辑 </a>
+                                                    <a href="{% url "courseManagement" %}" class="btn btn-white btn-sm"><i class="fa fa-folder"></i> 查看 </a>
                                                 </td>
                                             </tr>
                                             {% endfor %}

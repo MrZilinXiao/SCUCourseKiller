@@ -27,7 +27,7 @@
                     <div class="ibox float-e-margins">
                         <div class="ibox-title">
                             <h5>课程管理</h5>
-                            <span style='color:red;'>{{ notice }}</span>
+
                             <div class="ibox-tools">
                                 <a class="collapse-link">
                                     <i class="fa fa-chevron-up"></i>
@@ -47,16 +47,17 @@
                             </div>
                         </div>
                         <div class="ibox-content">
-
+                        <span style='color:red;'>{{ notice }}</span>
                             <table class="footable table table-stripped toggle-arrow-tiny" data-page-size="8">
                                 <thead>
                                 <tr>
                                     <th data-toggle="true">课程号</th>
                                     <th>课程名</th>
                                     <th>课序号</th>
+                                    <th>课程类型</th>
                                     <th data-hide="all">添加时间</th>
                                     <th data-hide="all">尝试次数</th>
-                                    <th data-hide="all">选项操作：</th>
+                                    <th data-hide="all">选项操作</th>
                                     <th>状态</th>
                                 </tr>
                                 </thead>
@@ -67,6 +68,7 @@
                                     <td>{{ course.kch }}</td>
                                     <td>{{ course.kcm }}</td>
                                     <td>{{ course.kxh }}</td>
+                                    <td>{{ course.type }}</td>
                                     <td>{{ course.addTime }}</td>
                                     <td><span class="pie">{{ course.attempts }}</span></td>
                                     <td><a href="{% url 'courseManagement' %}?del={{ course.cid }}"> <button type="button" class="btn btn-w-m btn-danger">删除课程</button></a></td>
@@ -106,23 +108,37 @@
                         </div>
                     </div>
                     <div class="ibox-content">
-                        <form class="form-horizontal m-t" id="commentForm" action="{% url "addCourse" %}" novalidate="novalidate">
+                        <form class="form-horizontal m-t" action="{% url "addCourse" %}" novalidate="novalidate" method="POST">
+                        {% csrf_token %}
+                            {% if errormsg %}
+                            <span style='color:red;'>{{ errormsg }}</span>
+                            {%  endif %}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">课程类型：</label>
+                                <div class="col-sm-8">
+                                    {{ form.type }}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">关键词：</label>
+                                <div class="col-sm-8">
+                                    {{ form.keyword }}
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label class="col-sm-3 control-label">课程号：</label>
                                 <div class="col-sm-8">
-{#                                    <input id="cname" name="name" minlength="2" type="text" class="form-control" required="" aria-required="true">#}
                                     {{ form.kch }}
                                 </div>
                             </div>
-                            <div class="form-group has-error">
+                            <div class="form-group">
                                 <label class="col-sm-3 control-label">课序号：</label>
                                 <div class="col-sm-8">
-{#                                    <input id="cemail" type="email" class="form-control" name="email" required="" aria-required="true" aria-invalid="true" aria-describedby="cemail-error">#}
                                     {{ form.kxh }}
                             </div>
                             <div class="form-group">
-                                <div class="col-sm-4 col-sm-offset-3">
-                                    <button class="btn btn-primary" type="submit">提交</button>
+                                <div class="col-sm-offset-4 col-sm-8">
+                                    <button class="btn btn-primary " type="submit"><i class="fa fa-check"></i>&nbsp;提交</button>
                                 </div>
                             </div>
                             </div>
@@ -131,7 +147,7 @@
                 </div>
                 <div class="ibox float-e-margins">
                     <div class="ibox-content">
-                        <p class="m-t">更多示例请访问官方示例页面：<a href="http://jqueryvalidation.org/files/demo/" target="_blank">查看</a>
+                        <p class="m-t">这里是注意事项<a href="http://jqueryvalidation.org/files/demo/" target="_blank">查看</a>
                         </p>
                         <p>中文API可参考：<a href="http://www.w3cschool.cc/jquery/jquery-plugin-validate.html" target="_blank">http://www.w3cschool.cc/jquery/jquery-plugin-validate.html</a>
                         </p>
