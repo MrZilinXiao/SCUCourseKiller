@@ -58,7 +58,7 @@
                         <span class="ng-scope">分类</span>
                     </li>
                     <li>
-                        <a class="J_menuItem" href={% url 'notification' %}><i class="fa fa-envelope"></i> <span class="nav-label">通知 </span>
+                        <a id="parentNoti2" class="J_menuItem" href={% url 'notification' %}><i class="fa fa-envelope"></i> <span class="nav-label">通知 </span>
                         {% if isNotified %}
                             <span id="notificationsCnt2" class="label label-warning pull-right">{{ notificationsCnt }}</span>
                         {% endif %}
@@ -86,7 +86,7 @@
                     </div>
                     <ul class="nav navbar-top-links navbar-right">
                         <li class="dropdown">
-                            <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                            <a id="parentNoti1" class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
                                 <i class="fa fa-envelope"></i>
                                 {% if isNotified %}
                             <span id="notificationsCnt1" class="label label-warning">{{ notificationsCnt }}</span>

@@ -11,10 +11,13 @@ urlpatterns = [
     url(r'^notification/$', views.notification, name="notification"),
     url(r'^courseManagement/$', views.courseManagement, name="courseManagement"),
     url(r'^accountManagement/$', views.accountManagement, name="accountManagement"),
+
+
     url(r'^addCourse$', views.addCourse, name="addCourse"),
     url(r'^jwcAccount$', views.jwcAccount, name="jwcAccount"),
     url(r'^deljwcAccount$', views.deljwcAccount, name="deljwcAccount"),
     url(r'^alterUserinfo$', views.alterUserinfo, name="alterUserinfo"),
+    url(r'^delReadNotification$', views.delReadNotification, name="delReadNotification"),
 
 
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),

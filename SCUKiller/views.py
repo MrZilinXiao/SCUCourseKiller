@@ -391,3 +391,11 @@ def MarkAsRead(request):
         if request.POST.get(str(item.id)) == str(item.id):
             item.isRead = True
             item.save()
+
+
+@login_required
+def delReadNotification(request):
+    nList = noti.objects.filter(host=request.user, isRead=True)
+    for item in nList:
+        item.delete()
+    return redirect('notification')
