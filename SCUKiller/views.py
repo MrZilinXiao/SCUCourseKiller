@@ -174,6 +174,9 @@ def addCourse(request):
         form = AddCourseForm(request.POST)
         UserQ = User.objects.get(username=request.user.username)
         userprofile = UserQ.UserProfile
+        if userprofile.courseRemainingCnt <= 0:
+            notice = '剩余课程权限不足！'
+            return render(request, 'courseManagement.html', locals())
         try:
             jwcaccount = userprofile.jwcHost
         except Exception as e:

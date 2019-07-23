@@ -60,7 +60,7 @@
                     <li>
                         <a class="J_menuItem" href={% url 'notification' %}><i class="fa fa-envelope"></i> <span class="nav-label">通知 </span>
                         {% if isNotified %}
-                            <span class="label label-warning pull-right">{{ notificationsCnt }}</span>
+                            <span id="notificationsCnt2" class="label label-warning pull-right">{{ notificationsCnt }}</span>
                         {% endif %}
                         </a>
                     </li>
@@ -89,7 +89,7 @@
                             <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
                                 <i class="fa fa-envelope"></i>
                                 {% if isNotified %}
-                            <span class="label label-warning">{{ notificationsCnt }}</span>
+                            <span id="notificationsCnt1" class="label label-warning">{{ notificationsCnt }}</span>
                         {% endif %}
                             </a>
                             <ul class="dropdown-menu dropdown-messages">

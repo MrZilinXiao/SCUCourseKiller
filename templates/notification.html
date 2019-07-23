@@ -62,7 +62,7 @@
                             </tr>
                             {% endfor %}
                         {% endif %}
-                        <input class="btn btn-w-m btn-info" type="submit" value="标记已读"/>
+                        <input class="btn btn-w-m btn-info" type="submit" value="标记已读" onclick="fresh()"/>
                         </form>
                         </tbody>
                     </table>
@@ -80,6 +80,7 @@
 
     <!-- 自定义js -->
     <script src={% static "js/content.js" %}></script>
+    <script src={% static "js/iframeFresh.js" %}></script>
 
 
     <!-- iCheck -->
