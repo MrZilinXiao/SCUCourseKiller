@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 
-    <title>SCUCourseKiller - 查看教务处表单</title>
+    <title>SCUCourseKiller - 修改用户信息表单</title>
     <meta name="keywords" content="">
     <meta name="description" content="">
 
@@ -25,7 +25,7 @@
             <div class="col-sm-6">
                 <div class="ibox float-e-margins">
                     <div class="ibox-title">
-                        <h5>成功绑定的教务处账号</h5>
+                        <h5>修改用户信息</h5>
                         <div class="ibox-tools">
                             <a class="collapse-link">
                                 <i class="fa fa-chevron-up"></i>
@@ -45,28 +45,41 @@
                         </div>
                     </div>
                     <div class="ibox-content">
-                        <form class="form-horizontal" method="POST">
+                        <form class="form-horizontal" method="POST" action="{% url "alterUserinfo" %}">
                             {% csrf_token %}
                             {% if errormsg %}
                 <span style='color:red;'>{{ errormsg }}</span>
                 {%  endif %}
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">学号：</label>
+                                <label class="col-sm-3 control-label">用户名：</label>
 
                                 <div class="col-sm-8">
-                                    <input type="text" readonly="readonly" name="delNumber" placeholder="{{ jwcaccount.jwcNumber }}" value="{{ jwcaccount.jwcNumber }}" class="form-control">
+                                    <input type="text" readonly="readonly" id="name" class="form-control" value="{{ username }}">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">Cookie (For Debug)：</label>
+                                <label class="col-sm-3 control-label">旧密码：</label>
                                 <div class="col-sm-8">
-                                    <input type="text" disabled="" placeholder="{{ jwcaccount.jwcCookie }}" class="form-control">
+                                    <input type="password" id="opwd" class="form-control">
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">新密码：</label>
+                                <div class="col-sm-8">
+                                    <input type="password" id="npwd" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">确认新密码：</label>
+                                <div class="col-sm-8">
+                                    <input type="password" id="re_pwd" class="form-control">
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <div class="col-sm-offset-3 col-sm-8">
-                                    <button class="btn btn-w-m btn-danger" type="submit" formaction="{% url "deljwcAccount" %}">解除绑定</button>
-                                    <button class="btn btn-w-m btn-info" type="submit" formaction="{% url "checkCookie" %}">检查Cookie有效性</button>
+                                    <span class="has-error" style='color:red;'></span>
+                                    <input type="button" id='btn' value="确认修改" class="btn btn-primary pull-right">
                                 </div>
                             </div>
                         </form>
@@ -76,6 +89,7 @@
         </div>
     </div>
 
+
     <!-- 全局js -->
     <script src={% static "js/jquery.min.js" %}></script>
     <script src={% static "js/bootstrap.min.js" %}></script>
@@ -83,6 +97,29 @@
     <!-- 自定义js -->
     <script src={% static "js/content.js" %}></script>
 
+<script>
+    $('#btn').click(function () {
+        $.ajax({
+            url: '{% url "alterUserinfo" %}',
+            type: 'post',
+            data: {
+                'name': $('#name').val(),
+                'npwd': $('#npwd').val(),
+                'opwd': $('#opwd').val(),
+                're_pwd': $('#re_pwd').val(),
+                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+            },
+            success: function (data) {
+                if (data.status === 200) {
+                    location.href = '/login'
+                }
+                else {
+                    $('.has-error').html(data.msg)
+                }
+            }
+        })
+    })
+</script>
     <!-- iCheck -->
     <script src="{% static "js/plugins/iCheck/icheck.min.js" %}"></script>
     <script>

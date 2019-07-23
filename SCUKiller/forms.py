@@ -76,13 +76,13 @@ class LoginForm(forms.Form):
 
 
 class AddCourseForm(forms.Form):
-    kch = forms.CharField(label='kch', max_length=9, validators=[RegexValidator(r'^[0-9]+$', '请输入数字')],
+    kch = forms.CharField(required=False, label='kch', max_length=9, validators=[RegexValidator(r'^[0-9]+$', '请输入数字')],
                           widget=forms.TextInput(attrs={'class': 'form-control',
                                                         'placeholder': '请输入9位课程号，只启用关键词选课可留空'}))
-    kxh = forms.CharField(label='kxh', max_length=3, validators=[RegexValidator(r'^[0-9]+$', '请输入数字')],
+    kxh = forms.CharField(required=False, label='kxh', max_length=3, validators=[RegexValidator(r'^[0-9]+$', '请输入数字')],
                           widget=forms.TextInput(attrs={'class': 'form-control',
                                                         'placeholder': '请输入课序号，只启用关键词选课可留空'}))
-    keyword = forms.CharField(label='keyword', max_length=100,
+    keyword = forms.CharField(required=False, label='keyword', max_length=100,
                               widget=forms.TextInput(attrs={'class': 'form-control',
                                                             'placeholder': '请输入课程关键词，留空代表仅监控指定课程',
                                                             'autofocus': ''}))

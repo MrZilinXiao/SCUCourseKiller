@@ -14,9 +14,11 @@ urlpatterns = [
     url(r'^addCourse$', views.addCourse, name="addCourse"),
     url(r'^jwcAccount$', views.jwcAccount, name="jwcAccount"),
     url(r'^deljwcAccount$', views.deljwcAccount, name="deljwcAccount"),
+    url(r'^alterUserinfo$', views.alterUserinfo, name="alterUserinfo"),
 
 
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),
     url(r'^checkUsername', views.checkUsername, name="checkUsername"),
+    url(r'^checkCookie', views.checkCookie, name="checkCookie"),
 
 ]

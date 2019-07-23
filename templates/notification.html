@@ -36,7 +36,7 @@
                             </button>
 
                         </div>
-                        <button class="btn btn-white btn-sm" data-toggle="tooltip" data-placement="left" title="刷新邮件列表"><i class="fa fa-refresh"></i> 刷新</button>
+                        <button class="btn btn-white btn-sm" data-toggle="tooltip" data-placement="left" title="刷新邮件列表" onclick="self.location.reload()"><i class="fa fa-refresh"></i> 刷新</button>
 
                     </div>
                 </div>
@@ -44,11 +44,13 @@
 
                     <table class="table table-hover table-mail">
                         <tbody>
+                        <form method="POST" class="form-horizontal" action="{% url "notification" %}">
+                        {% csrf_token %}
                         {% if notifications %}
                             {% for item in notifications %}
                             <tr class="{% if item.isRead %}read{% else %}unread{% endif %}">
                                 <td class="check-mail">
-                                    <input type="checkbox" class="i-checks">
+                                    <input type="checkbox" value="{{ item.id }}" {% if item.isRead %}checked="checked" disabled="disabled" {% endif %} name="{{ item.id }}">
                                 </td>
                                 <td class="mail-ontact"><a href="mail_detail.html">{{ item.title }}</a>
                                 </td>
@@ -60,6 +62,8 @@
                             </tr>
                             {% endfor %}
                         {% endif %}
+                        <input class="btn btn-w-m btn-info" type="submit" value="标记已读"/>
+                        </form>
                         </tbody>
                     </table>
 
