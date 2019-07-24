@@ -53,6 +53,7 @@
                                 <tr>
                                     <th data-toggle="true">课程号</th>
                                     <th>课程名</th>
+                                    <th>关键词</th>
                                     <th>课序号</th>
                                     <th>课程类型</th>
                                     <th data-hide="all">学期</th>
@@ -66,9 +67,10 @@
                                 {% if Courses %}
                                     {% for course in Courses %}
                                 <tr>
-                                    <td>{{ course.kch }}</td>
-                                    <td>{{ course.kcm }}</td>
-                                    <td>{{ course.kxh }}</td>
+                                    <td>{% if course.kch != '' %}{{ course.kch }}{% else %}未指定{% endif %}</td>
+                                    <td>{% if course.kcm != '' %}{{ course.kcm }}{% else %}未指定{% endif %}</td>
+                                    <td>{% if course.keyword != '' %}{{ course.keyword }}{% else %}未指定{% endif %}</td>
+                                    <td>{% if course.kxh != '' %}{{ course.kxh }}{% else %}未指定{% endif %}</td>
                                     <td>{{ course.type }}</td>
                                     <td>{{ course.term }}</td>
                                     <td>{{ course.addTime }}</td>

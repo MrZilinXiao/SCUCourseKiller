@@ -21,7 +21,7 @@ def valCookie(cookieStr):
     cookieJar = requests.utils.cookiejar_from_dict(cookie_dict)
     # cookie_support = request.HTTPCookieProcessor(cookieJar)
     # proxy_handler = request.ProxyHandler(proxy)
-    (opener, hahah) = InitOpener(cookieJar)
+    (opener, _) = InitOpener(cookieJar)
     testreq = request.Request(token_url, headers=headers)
     try:
         testVal = opener.open(testreq)
@@ -30,23 +30,18 @@ def valCookie(cookieStr):
         return True
     except error.HTTPError as e:
         print(e)
-        raise Exception("Cookie已经失效！已经更新为最新的Cookie！")
+        raise e
     except Exception as e:
         print(e)
         raise Exception(e)
 
 
-
-def valjwcAccount(stuID, stuPass):
+def valjwcAccount(stuID, stuPass):  # 可以更新Cookie
     login_data = {
         'j_username': stuID,
         'j_password': stuPass,
         'j_captcha': 'error',
     }
-    # cookie = http.cookiejar.CookieJar()
-    # cookie_support = request.HTTPCookieProcessor(cookie)
-    # # For Proxy
-    # proxy_handler = request.ProxyHandler(proxy)
     [opener, cookie] = InitOpener()
     # Login
     opener.open(request.Request("http://zhjw.scu.edu.cn/login", headers=headers))  # Get cookie

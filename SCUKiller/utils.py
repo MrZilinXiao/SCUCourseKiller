@@ -57,7 +57,7 @@ def checkResult(result_data, opener):  # 检查结果界面
                 #     print("Success select or you've alredy selected")
                 #     success = True
                 # if (result['isFinish'].find("成功") != -1):
-                success = True
+                success = 'success'
                 break
             if result['result'][0].find('没有课余量') != -1:
                 success = 'No Available Courses'
@@ -95,14 +95,16 @@ def getResultData(selectResponse):
     return result_data, success
 
 
-def getSelectData(wantSelect):
+def getSelectData(token, wantSelect):
     select_data = {
         'dealType': '5',
         'kcIds': '',
         'kcms': '',
         'fajhh': '4263',
         'sj': '0_0',
-        'kclbdm': ''
+        'kclbdm': '',
+        'inputCode': '',
+        'tokenValue': str(token)
     }
 
     # Get data ready

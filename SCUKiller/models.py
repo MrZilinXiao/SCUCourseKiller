@@ -47,7 +47,7 @@ class courses(models.Model):
     term = models.CharField(verbose_name='学期', max_length=100, default='2019-2020-1-1')
     addTime = models.DateTimeField('添加时间', auto_now_add=True)
     attempts = models.IntegerField(verbose_name="尝试次数", default=0)
-    isSuccess = models.BooleanField(verbose_name='是否成功', default=False)
+    isSuccess = models.IntegerField(verbose_name='是否成功', default=0)  # -1 异常 0 未成功 1 已成功
 
     class Meta:
         verbose_name = "课程信息"

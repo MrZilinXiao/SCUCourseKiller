@@ -10,6 +10,8 @@ from django.contrib.auth.decorators import login_required
 from . import jwcAccount as jwcVal
 from .models import jwcAccount as jwcModel
 
+from django.db.models import Q
+
 
 # Create your views here.
 def check_captcha(request):
@@ -206,17 +208,23 @@ def addCourse(request):
                         Courses = UserQ.UserProfile.coursesHost.all()
                         return render(request, 'courseManagement.html', locals())
             host = UserQ.UserProfile
-            notice = '课程添加成功！'  # TODO: Need to verify whether it is a vaild course
+            notice = '课程添加成功！'  # TODO: 加入课程时验证课程是否存在
             # TODO:如果课程号与课序号都给出则关闭关键词模式
+            # TODO Further: 在前端可视化返回符合要求的课程列表
             if kch != '' and kxh != '':
                 kcm = ''
                 # 都给出时需要获取课程名
                 pass
+            UserQ.UserProfile.courseRemainingCnt -= 1
+            UserQ.UserProfile.courseCnt += 1
+            UserQ.UserProfile.save()
+
             course = courses(kch=kch, kxh=kxh, keyword=keyword, host=host, type=ctype, term=term)
             course.save()
             Courses = UserQ.UserProfile.coursesHost.all()
             CreateNotification(username=request.user.username, title="课程添加成功",
                                content="您已经成功添加课程号为" + str(kch) + "，课序号为" + str(kxh) + "的课程！")
+
         else:
             notice = '提交的课程信息不合法！'
         return render(request, 'courseManagement.html', locals())
@@ -289,7 +297,7 @@ def checkCookie(request):
             except Exception as e:
                 errormsg = e  # Cookie失效
         except Exception as e:
-            errormsg = e  # 恶意请求
+            errormsg = e  # 恶意请求或 Cookie Invaild Session
         if str(errormsg) == "Cookie已经失效！已经更新为最新的Cookie！":
             jwcaccount.jwcCookie = str(jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd))
             jwcaccount.save()
@@ -334,7 +342,8 @@ def deljwcAccount(request):
                 if request.user.username != jwcAcc.userprofile.user.username:
                     raise Exception("你欲删除的学号不属于你！")
                 UserQ = User.objects.get(username=request.user.username)
-                remainingCourses = courses.objects.filter(host=UserQ.UserProfile, isSuccess=False)
+                remainingCourses = courses.objects.filter(host=UserQ.UserProfile)
+                remainingCourses = remainingCourses.filter(~Q(isSuccess=1))
                 if remainingCourses:
                     raise Exception("你还有未完成的课程！")
                 jwcAcc.delete()
@@ -384,6 +393,7 @@ def CreateNotification(username, title, content):
     UserQ = User.objects.get(username=username)
     notifi = noti(host=UserQ, title=title, content=content)
     notifi.save()
+    print("[%s][%s]%s" % (username, title, content))
 
 
 def MarkAsRead(request):
