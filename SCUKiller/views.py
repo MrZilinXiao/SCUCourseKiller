@@ -350,6 +350,8 @@ def deljwcAccount(request):
                 CreateNotification(username=request.user.username, title="教务处账号解绑成功",
                                    content="您已经成功解绑学号为" + str(delNumber) + "的教务处账号！")
                 errormsg = "解绑成功！"
+                UserQ.UserProfile.courseCnt -= 1
+                UserQ.UserProfile.save()
                 form = AddjwcAccount()
                 return render(request, 'bindjwcAccount.html', locals())
             except Exception as e:

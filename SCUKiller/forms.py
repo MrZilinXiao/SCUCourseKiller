@@ -12,10 +12,10 @@ class RegForm(forms.Form):
     email = forms.EmailField(label='Email', max_length=100, error_messages={'required': '邮箱不能为空', 'invalid': "邮箱格式错误"},
                              widget=forms.TextInput(attrs={'class': 'form-control',
                                                            'placeholder': '电子邮箱'}))
-    phoneNumber = forms.CharField(label='PhoneNumber', max_length=11,
+    phoneNumber = forms.CharField(label='PhoneNumber', max_length=11, validators=[RegexValidator(r'^[0-9]+$', '请输入数字')],
                                   widget=forms.TextInput(attrs={'class': 'form-control',
                                                                 'placeholder': '11位手机号',
-                                                                'onkeyup': 'value=value.replace(/[^0-9]/g,'')'}))
+                                                                }))
     password = forms.CharField(label='Password', min_length=8, max_length=256,
                                widget=forms.PasswordInput(attrs={'class': 'form-control',
                                                                  'placeholder': '密码'}))
@@ -78,10 +78,12 @@ class LoginForm(forms.Form):
 class AddCourseForm(forms.Form):
     kch = forms.CharField(required=False, label='kch', max_length=9, validators=[RegexValidator(r'^[0-9]+$', '请输入数字')],
                           widget=forms.TextInput(attrs={'class': 'form-control',
-                                                        'placeholder': '请输入9位课程号，只启用关键词选课可留空'}))
+                                                        'placeholder': '请输入9位课程号，只启用关键词选课可留空',
+                                                        }))
     kxh = forms.CharField(required=False, label='kxh', max_length=3, validators=[RegexValidator(r'^[0-9]+$', '请输入数字')],
                           widget=forms.TextInput(attrs={'class': 'form-control',
-                                                        'placeholder': '请输入课序号，只启用关键词选课可留空'}))
+                                                        'placeholder': '请输入课序号，只启用关键词选课可留空',
+                                                        }))
     keyword = forms.CharField(required=False, label='keyword', max_length=100,
                               widget=forms.TextInput(attrs={'class': 'form-control',
                                                             'placeholder': '请输入课程关键词，留空代表仅监控指定课程',
@@ -97,7 +99,8 @@ class AddCourseForm(forms.Form):
         ('2019-2020-1-1', '2019年春季学期'),
     )
 
-    term = forms.CharField(max_length=100, widget=forms.widgets.Select(choices=SELVALUE, attrs={'class': 'form-control m-b'}))
+    term = forms.CharField(max_length=100,
+                           widget=forms.widgets.Select(choices=SELVALUE, attrs={'class': 'form-control m-b'}))
 
 
 class AddjwcAccount(forms.Form):

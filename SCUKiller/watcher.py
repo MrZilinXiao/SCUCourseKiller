@@ -84,7 +84,10 @@ def postCourse(opener, availCourse):
 def watchCourses():
     coursesPending = courses.objects.filter(~Q(isSuccess=1))
     for course in coursesPending:
-        if course.isSuccess == -1:
+        if course.status == '等待中':
+            course.status = '运行中'
+            course.save()
+        if course.isSuccess == -1:  # 跳过异常课程
             continue
         jwc = course.host.jwcHost
         try:  # 检查Cookie或账号是否失效
