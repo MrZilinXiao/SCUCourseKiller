@@ -93,6 +93,12 @@ class AddCourseForm(forms.Form):
         widget=forms.widgets.RadioSelect
     )
 
+    SELVALUE = (
+        ('2019-2020-1-1', '2019年春季学期'),
+    )
+
+    term = forms.CharField(max_length=100, widget=forms.widgets.Select(choices=SELVALUE, attrs={'class': 'form-control m-b'}))
+
 
 class AddjwcAccount(forms.Form):
     stuID = forms.CharField(label='stuID', max_length=13, error_messages={'required': '学号不能为空'},

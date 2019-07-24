@@ -191,6 +191,7 @@ def addCourse(request):
             kch = form.cleaned_data['kch']
             kxh = form.cleaned_data['kxh']
             type = form.cleaned_data['type']
+            term = form.cleaned_data['term']
             if type == '1':
                 ctype = "自由选课"
             elif type == '2':
@@ -211,7 +212,7 @@ def addCourse(request):
                 kcm = ''
                 # 都给出时需要获取课程名
                 pass
-            course = courses(kch=kch, kxh=kxh, keyword=keyword, host=host, type=ctype)
+            course = courses(kch=kch, kxh=kxh, keyword=keyword, host=host, type=ctype, term=term)
             course.save()
             Courses = UserQ.UserProfile.coursesHost.all()
             CreateNotification(username=request.user.username, title="课程添加成功",

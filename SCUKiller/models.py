@@ -44,6 +44,7 @@ class courses(models.Model):
     kch = models.CharField(verbose_name='课程号', max_length=100, default='')
     kxh = models.CharField(verbose_name='课序号', max_length=100, default='')
     type = models.CharField(verbose_name='课程类型', max_length=10, default='自由选课')
+    term = models.CharField(verbose_name='学期', max_length=100, default='2019-2020-1-1')
     addTime = models.DateTimeField('添加时间', auto_now_add=True)
     attempts = models.IntegerField(verbose_name="尝试次数", default=0)
     isSuccess = models.BooleanField(verbose_name='是否成功', default=False)
