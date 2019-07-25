@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+#nginx settings
+sed -i '/user/{s/nginx/root/}' /etc/nginx/nginx.conf
+ln -s /root/project/mysite_nginx.conf /etc/nginx/conf.d/
+nginx
+
+
+#application settings
+export DJANGO_SETTINGS_MODULE=SCUCourseKiller.settings
+cd SCUCourseKiller
+python3 ./manage.py migrate --noinput
+python3 ./manage.py loaddata ./fixtures/superuser.json
+python3 ./manage.py collectstatic --noinput
+
+cd ..
+uwsgi --ini mysite_uwsgi.ini
