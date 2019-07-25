@@ -297,7 +297,7 @@ def checkCookie(request):
             except Exception as e:
                 errormsg = e  # Cookie失效
         except Exception as e:
-            errormsg = e  # 恶意请求或 Cookie Invaild Session
+            errormsg = e  # 恶意请求 或 Cookie InvaildSession
         if str(errormsg) == "Cookie已经失效！已经更新为最新的Cookie！":
             jwcaccount.jwcCookie = str(jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd))
             jwcaccount.save()
@@ -314,6 +314,8 @@ def courseManagement(request):
         if cidDel is not None:
             CourseQ = courses.objects.get(cid=cidDel)
             notice = "课程《" + CourseQ.kcm + "》已被成功删除"
+            UserQ.UserProfile.courseCnt -= 1
+            UserQ.UserProfile.save()
             CourseQ.delete()
             CreateNotification(username=request.user.username, title="课程删除成功",
                                content="课程《" + CourseQ.kcm + "》已被成功删除")
@@ -324,11 +326,6 @@ def courseManagement(request):
         return render(request, 'courseManagement.html', locals())
     else:
         return redirect('login')
-
-
-@login_required
-def accountManagement(request):
-    return None
 
 
 def deljwcAccount(request):

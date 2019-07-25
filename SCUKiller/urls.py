@@ -1,4 +1,5 @@
 from . import views
+from . import watcher
 from django.conf.urls import url
 
 urlpatterns = [
@@ -10,7 +11,7 @@ urlpatterns = [
     url(r'^register/$', views.register, name="register"),
     url(r'^notification/$', views.notification, name="notification"),
     url(r'^courseManagement/$', views.courseManagement, name="courseManagement"),
-    url(r'^accountManagement/$', views.accountManagement, name="accountManagement"),
+    # url(r'^accountManagement/$', views.accountManagement, name="accountManagement"),
 
 
     url(r'^addCourse$', views.addCourse, name="addCourse"),
@@ -20,6 +21,7 @@ urlpatterns = [
     url(r'^delReadNotification$', views.delReadNotification, name="delReadNotification"),
 
 
+    url(r'^watcher', watcher.watchCourses, name="watcher"),
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),
     url(r'^checkUsername', views.checkUsername, name="checkUsername"),
     url(r'^checkCookie', views.checkCookie, name="checkCookie"),

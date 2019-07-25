@@ -48,7 +48,7 @@ def create_validate_code(size=(120, 30),
             draw.line([begin, end], fill=(0, 0, 0))
 
     def create_points():
-        '''绘制干扰点'''
+        """绘制干扰点"""
         chance = min(100, max(0, int(
             point_chance)))  # 大小限制在[0,  100]
         for w in range(width):
@@ -58,7 +58,7 @@ def create_validate_code(size=(120, 30),
                     draw.point((w, h), fill=(0, 0, 0))
 
     def create_strs():
-        '''绘制验证码字符'''
+        """绘制验证码字符"""
         c_chars = get_chars()
         strs = ' %s ' % ' '.join(c_chars)  # 每个字符前后以空格隔开
         font = ImageFont.truetype(font_type, font_size)
