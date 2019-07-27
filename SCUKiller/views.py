@@ -213,7 +213,7 @@ def addCourse(request):
             # TODO Further: 在前端可视化返回符合要求的课程列表
             if kch != '' and kxh != '':
                 kcm = ''
-                # 都给出时需要获取课程名
+                # TODO:都给出时需要获取课程名
                 pass
             UserQ.UserProfile.courseRemainingCnt -= 1
             UserQ.UserProfile.courseCnt += 1

@@ -4,22 +4,20 @@ MAINTAINER MrZilinXiao <xiaozilin1@gmail.com>
 
 ENV TZ "Asia/Shanghai"
 
-
 ENV DOCKER_SRC=SCUCourseKiller
 
 ENV DOCKER_HOME=/root
 
 ENV DOCKER_PROJECT=/root/SCUCourseKiller
 
-
 WORKDIR $DOCKER_HOME
 
-RUN mkdir media static
+RUN mkdir SCUCourseKiller
 
 RUN yum -y install epel-release yum-utils && \
     yum -y install git nginx gcc gcc-c++ && \
 	yum -y install python36 python36-devel python36-pip && \
-    yum clean all && \
+    yum clean all
 
 WORKDIR $DOCKER_PROJECT
 
