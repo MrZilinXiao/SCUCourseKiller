@@ -1,3 +1,5 @@
+# coding=utf-8
+
 from django.http import JsonResponse
 from django.shortcuts import render, HttpResponse, redirect
 
@@ -9,8 +11,13 @@ from django.contrib.auth.decorators import login_required
 
 from . import jwcAccount as jwcVal
 from .models import jwcAccount as jwcModel
+from .jwcCourse import courseid2courses
 
 from django.db.models import Q
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
@@ -100,7 +107,7 @@ def logIn(request):
                 print(user)
                 if user is not None:
                     login(request, user)
-                    print("登录成功！")
+                    print(u"登录成功！")
                     return redirect(request.session['login_from'])
                 elif captcha != request.session['CheckCode'].lower():
                     errormsg = "验证码错误"
@@ -173,60 +180,101 @@ def inner_index(request):
 @login_required
 def addCourse(request):
     if request.method == 'POST':
-        form = AddCourseForm(request.POST)
-        UserQ = User.objects.get(username=request.user.username)
-        userprofile = UserQ.UserProfile
-        if userprofile.courseRemainingCnt <= 0:
-            notice = '剩余课程权限不足！'
-            return render(request, 'courseManagement.html', locals())
         try:
-            jwcaccount = userprofile.jwcHost
-        except Exception as e:
-            print(e)
-            jwcaccount = None
-        if jwcaccount is None:
-            notice = '您尚未绑定教务处账号！'
-            return render(request, 'courseManagement.html', locals())
-        if form.is_valid():
+            form = AddCourseForm(request.POST)
             UserQ = User.objects.get(username=request.user.username)
-            keyword = form.cleaned_data['keyword']
-            kch = form.cleaned_data['kch']
-            kxh = form.cleaned_data['kxh']
-            type = form.cleaned_data['type']
-            term = form.cleaned_data['term']
-            if type == '1':
-                ctype = "自由选课"
-            elif type == '2':
-                ctype = "方案选课"
-            else:
-                ctype = "其他选课"
-            find_same = courses.objects.filter(kch=kch, kxh=kxh)
-            if find_same:
-                for item in find_same:
-                    if item.status != '已完成':
-                        notice = '系统中有相同的课程未完成！'
-                        Courses = UserQ.UserProfile.coursesHost.all()
-                        return render(request, 'courseManagement.html', locals())
-            host = UserQ.UserProfile
-            notice = '课程添加成功！'  # TODO: 加入课程时验证课程是否存在
-            # TODO:如果课程号与课序号都给出则关闭关键词模式
-            # TODO Further: 在前端可视化返回符合要求的课程列表
-            if kch != '' and kxh != '':
+            userprofile = UserQ.UserProfile
+            if userprofile.courseRemainingCnt <= 0:
+                raise Exception('剩余课程权限不足！')
+                # notice = '剩余课程权限不足！'
+                # return render(request, 'courseManagement.html', locals())
+            try:
+                jwcaccount = userprofile.jwcHost
+            except Exception as e:
+                print(e)
+                jwcaccount = None
+            if jwcaccount is None:
+                raise Exception('您尚未绑定教务处账号！')
+                # notice = '您尚未绑定教务处账号！'
+                # return render(request, 'courseManagement.html', locals())
+            if form.is_valid():
+                UserQ = User.objects.get(username=request.user.username)
+                keyword = form.cleaned_data['keyword']
+                kch = form.cleaned_data['kch']
+                kxh = form.cleaned_data['kxh']
+                type = form.cleaned_data['type']
+                term = form.cleaned_data['term']
+                if type == '1':
+                    ctype = "自由选课"
+                elif type == '2':
+                    ctype = "方案选课"
+                else:
+                    ctype = "其他选课"
+                find_same = courses.objects.filter(kch=kch, kxh=kxh)
+                if find_same:
+                    for item in find_same:
+                        if item.status != '已完成':
+                            notice = '系统中有相同的课程未完成！'
+                            Courses = UserQ.UserProfile.coursesHost.all()
+                            return render(request, 'courseManagement.html', locals())
+                host = UserQ.UserProfile
+                # DONE: 加入课程时验证课程是否存在
+                # DOING:如果课程号与课序号都给出则关闭关键词模式
+                # DOING: 在前端可视化返回符合要求的课程列表
+
+                # 监控方式归纳
+                # 1、纯关键词抢课，不能指定课程号与课序号。（例如抢中华文化）（已实现）
+                # 2、单纯指定课程号，不指定课序号与关键词。（如抢不指定节次的课程，可能中途出现与已有课程冲突）（没有必要指定关键词，单一课程号对应单一的课程名）
+                # 这里可以扩展为多选框抢指定课程号，人工舍去不符合要求的课程后提交，避免了通过教务处奇怪的命名方式检查是否课程冲突（无聊的时候去扒一下前端如何实现）
+                # 3、指定课程号和课序号，需要提前查询好自己课表是否与此课程冲突（这种情况一旦发现冲突系统就应停止监控）
+
+                # 以下是可能的默认值
                 kcm = ''
-                # TODO:都给出时需要获取课程名
-                pass
-            UserQ.UserProfile.courseRemainingCnt -= 1
-            UserQ.UserProfile.courseCnt += 1
-            UserQ.UserProfile.save()
+                teacher = ''
+                campus = ''
+                location = ''
+                if kch != '':  # 有无课序号影响的是courseList长度是否为1
+                    if keyword != '':
+                        raise Exception("已经指定课程号的情况下请将关键词留空！")
+                    opener, _ = jwcVal.InitOpener()
+                    try:
+                        courseList = courseid2courses(opener, kch, kxh, term)
+                    except Exception as e:
+                        logger.error(str(e))
+                        print(e)
+                        raise Exception(e)
+                    # TODO:都给出时需要获取课程名
+                    if len(courseList) == 0:
+                        raise Exception("由你提供的课程号与课序号无法查找到对应的课程，请检查输入是否正确！")
+                    # elif len(courseList) == 1:  # 注意courseList的查询结果是按一周上课节次来的，可能重复
+                    #     kcm = courseList[0]['kcm']
+                    #     teacher = courseList[0]['skjs']
+                    #     campus = courseList[0]['xqm']
+                    #     location = courseList[0]['jxlm'] + " " + courseList[0]['jasm']
+                    else:
+                        if kxh == '':  # 仅课程号进入前端选择模式
+                            pass
+                        else:  # 整合信息
+                            kcm = courseList[0]['kcm']
+                            teacher = courseList[0]['skjs']
+                            campus = courseList[0]['xqm']
+                            for i, c in enumerate(courseList):
+                                location += (str(i+1)+"："+c['jxlm'] + " " + c['jasm'] + "\n")
+                UserQ.UserProfile.courseRemainingCnt -= 1
+                UserQ.UserProfile.courseCnt += 1
+                UserQ.UserProfile.save()
 
-            course = courses(kch=kch, kxh=kxh, keyword=keyword, host=host, type=ctype, term=term)
-            course.save()
-            Courses = UserQ.UserProfile.coursesHost.all()
-            CreateNotification(username=request.user.username, title="课程添加成功",
-                               content="您已经成功添加课程号为" + str(kch) + "，课序号为" + str(kxh) + "的课程！")
-
-        else:
-            notice = '提交的课程信息不合法！'
+                course = courses(kch=kch, kxh=kxh, kcm=kcm, keyword=keyword, host=host, type=ctype, term=term,
+                                 teacher=teacher, campus=campus, location=location)
+                course.save()
+                Courses = UserQ.UserProfile.coursesHost.all()
+                CreateNotification(username=request.user.username, title="课程添加成功",
+                                   content="您已经成功添加课程号为" + str(kch) + "，课序号为" + str(kxh) + "的课程《" + kcm + "》！")
+                notice = '课程添加成功！'
+            else:
+                notice = '提交的课程信息不合法！'
+        except Exception as e:
+            notice = str(e)
         return render(request, 'courseManagement.html', locals())
 
 
@@ -347,8 +395,6 @@ def deljwcAccount(request):
                 CreateNotification(username=request.user.username, title="教务处账号解绑成功",
                                    content="您已经成功解绑学号为" + str(delNumber) + "的教务处账号！")
                 errormsg = "解绑成功！"
-                UserQ.UserProfile.courseCnt -= 1
-                UserQ.UserProfile.save()
                 form = AddjwcAccount()
                 return render(request, 'bindjwcAccount.html', locals())
             except Exception as e:
@@ -395,6 +441,7 @@ def CreateNotification(username, title, content):
     print("[%s][%s]%s" % (username, title, content))
 
 
+@login_required
 def MarkAsRead(request):
     nList = noti.objects.filter(host=request.user, isRead=False)
     for item in nList:

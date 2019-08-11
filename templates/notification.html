@@ -52,9 +52,9 @@
                                 <td class="check-mail">
                                     <input type="checkbox" value="{{ item.id }}" {% if item.isRead %}checked="checked" disabled="disabled" {% endif %} name="{{ item.id }}">
                                 </td>
-                                <td class="mail-ontact"><a href="mail_detail.html">{{ item.title }}</a>
+                                <td class="mail-ontact">{{ item.title }}
                                 </td>
-                                <td class="mail-subject"><a href="mail_detail.html">{{ item.content }}</a>
+                                <td class="mail-subject">{{ item.content }}
                                 </td>
                                 <td class=""><i class="fa fa-paperclip"></i>
                                 </td>

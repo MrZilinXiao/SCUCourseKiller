@@ -96,7 +96,7 @@ class AddCourseForm(forms.Form):
     )
 
     SELVALUE = (
-        ('2019-2020-1-1', '2019年春季学期'),
+        ('2019-2020-1-1', '2019年秋季学期'),
     )
 
     term = forms.CharField(max_length=100,
