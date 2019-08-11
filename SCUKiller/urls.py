@@ -25,5 +25,6 @@ urlpatterns = [
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),
     url(r'^checkUsername', views.checkUsername, name="checkUsername"),
     url(r'^checkCookie', views.checkCookie, name="checkCookie"),
+    url(r'^getCourseList', views.getCourseList, name="getCourseList"),
 
 ]

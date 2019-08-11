@@ -214,9 +214,8 @@ def addCourse(request):
                 if find_same:
                     for item in find_same:
                         if item.status != '已完成':
-                            notice = '系统中有相同的课程未完成！'
                             Courses = UserQ.UserProfile.coursesHost.all()
-                            return render(request, 'courseManagement.html', locals())
+                            raise Exception("系统中有相同的课程未完成！")
                 host = UserQ.UserProfile
                 # DONE: 加入课程时验证课程是否存在
                 # DOING:如果课程号与课序号都给出则关闭关键词模式
@@ -253,13 +252,25 @@ def addCourse(request):
                     #     location = courseList[0]['jxlm'] + " " + courseList[0]['jasm']
                     else:
                         if kxh == '':  # 仅课程号进入前端选择模式
-                            pass
+                            json_parsed = {"pageSize": 0, "pageNum": 0, "total": min(10, len(courseList)), "offset": 0,
+                                           'rows': []}
+                            for i in range(1, len(courseList)+1):
+                                json_parsed['rows'].append({})
+                                json_parsed['rows'][i - 1]['id'] = i
+                                json_parsed['rows'][i - 1]['kcm'] = courseList[i - 1]['kcm']
+                                json_parsed['rows'][i - 1]['kch'] = courseList[i - 1]['kch']
+                                json_parsed['rows'][i - 1]['kxh'] = courseList[i - 1]['kxh']
+                                json_parsed['rows'][i - 1]['term'] = courseList[i - 1]['zxjxjhh']
+                                json_parsed['rows'][i - 1]['teacher'] = courseList[i - 1]['skjs']
+                                json_parsed['rows'][i - 1]['type'] = ctype
+                            request.session["courseList"] = json_parsed
+                            raise Exception("请在右侧的课程列表中选择需要监控的课程并提交！")
                         else:  # 整合信息
                             kcm = courseList[0]['kcm']
                             teacher = courseList[0]['skjs']
                             campus = courseList[0]['xqm']
                             for i, c in enumerate(courseList):
-                                location += (str(i+1)+"："+c['jxlm'] + " " + c['jasm'] + "\n")
+                                location += (str(i + 1) + "：" + c['jxlm'] + " " + c['jasm'] + "\n")
                 UserQ.UserProfile.courseRemainingCnt -= 1
                 UserQ.UserProfile.courseCnt += 1
                 UserQ.UserProfile.save()
@@ -283,7 +294,7 @@ def jwcAccount(request):
     if request.user.is_authenticated:
         if request.method == 'GET':
             UserQ = User.objects.get(username=request.user.username)
-            # get返回单对象 反向查询需要try
+            # get返回单对象 反向查询需要try 当找不到或找到多个时报错
             # filter返回QuerySet，直接if判断是否为空
             userprofile = UserQ.UserProfile
             try:
@@ -362,12 +373,12 @@ def courseManagement(request):
         if cidDel is not None:
             CourseQ = courses.objects.get(cid=cidDel)
             notice = "课程《" + CourseQ.kcm + "》已被成功删除"
-            UserQ.UserProfile.courseCnt -= 1
-            UserQ.UserProfile.save()
             CourseQ.delete()
             CreateNotification(username=request.user.username, title="课程删除成功",
                                content="课程《" + CourseQ.kcm + "》已被成功删除")
             Courses = UserQ.UserProfile.coursesHost.all()
+            UserQ.UserProfile.courseCnt = len(Courses)
+            UserQ.UserProfile.save()
             return render(request, 'courseManagement.html', locals())
 
         Courses = UserQ.UserProfile.coursesHost.all()
@@ -456,3 +467,62 @@ def delReadNotification(request):
     for item in nList:
         item.delete()
     return redirect('notification')
+
+
+@login_required
+def getCourseList(request):
+    if request.method == 'GET':
+        try:
+            return JsonResponse(request.session["courseList"])  # 一点骚操作，异步前端操作真的不熟
+        except KeyError:
+            return HttpResponse(1)  # 正常情况
+        except Exception as e:
+            raise e
+    if request.method == 'POST':
+        UserQ = User.objects.get(username=request.user.username)
+        host = UserQ.UserProfile
+        ids = request.POST.get('ids')
+        idList = []
+        for id in ids.split(","):
+            idList.append(int(id))
+        for id in idList:
+            kcm = request.session["courseList"]['rows'][id-1]['kcm']
+            kch = request.session["courseList"]['rows'][id - 1]['kch']
+            kxh = request.session["courseList"]['rows'][id - 1]['kxh']
+            kcm = request.session["courseList"]['rows'][id - 1]['kcm']
+            term = request.session["courseList"]['rows'][id - 1]['term']
+            type = request.session["courseList"]['rows'][id - 1]['type']
+            teacher = request.session["courseList"]['rows'][id - 1]['teacher']
+            opener, _ = jwcVal.InitOpener()
+            find_same = courses.objects.filter(kch=kch, kxh=kxh)
+            try:
+                if find_same:
+                    for item in find_same:
+                        if item.status != '已完成':
+                            CreateNotification(username=request.user.username, title="批量课程添加失败",
+                                               content="在您通过多选课程时，课程号为" + str(kch) + "，课序号为" + str(
+                                                   kxh) + "的课程《" + kcm + "》经系统检测，目前在系统中有相同课程未完成，请稍后再试！")
+                            raise Exception("重复课程")
+            except Exception as e:
+                continue  # 跳过重复课程
+            try:
+                courseList = courseid2courses(opener, kch, kxh, term)
+            except Exception as e:
+                logger.error(str(e))
+                print(e)
+                raise Exception(e)
+            campus = courseList[0]['xqm']
+            location = ''
+            for i, c in enumerate(courseList):
+                location += (str(i + 1) + "：" + c['jxlm'] + " " + c['jasm'] + "\n")
+            course = courses(kch=kch, kxh=kxh, kcm=kcm, host=host, type=type, term=term,
+                             teacher=teacher, campus=campus, location=location)
+            course.save()
+            CreateNotification(username=request.user.username, title="批量课程添加成功",
+                               content="您已经成功通过多选课程的方式，添加课程号为" + str(kch) + "，课序号为" + str(kxh) + "的课程《" + kcm + "》！")
+
+        UserQ.UserProfile.courseRemainingCnt -= 1
+        UserQ.UserProfile.courseCnt += 1
+        UserQ.UserProfile.save()
+        del request.session["courseList"]
+        return HttpResponse('success')
