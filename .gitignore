@@ -7,7 +7,6 @@ static/
 templates/css/*
 templates/fonts/*
 templates/js/*
-SCUKiller/migrations/*
 # C extensions
 *.so
 
