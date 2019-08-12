@@ -1,0 +1,134 @@
+{% load staticfiles %}<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <title>SCUCourseKiller - 神秘之地</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/font-awesome.css" %}" rel="stylesheet">
+    <link href="{% static "css/plugins/iCheck/custom.css" %}" rel="stylesheet">
+    <link href="{% static "css/animate.css" %}" rel="stylesheet">
+    <link href="{% static "css/style.css" %}" rel="stylesheet">
+
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>注入点数</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="bindjwcAccount.html#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal" method="POST">
+                        {% csrf_token %}
+                        {% if errormsg %}
+                            <span style='color:red;'>{{ errormsg }}</span>
+                        {% endif %}
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">神秘密码：</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" name="code" placeholder="" value="" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-8">
+                                <button class="btn btn-w-m btn-danger" type="submit" formaction="{% url "topup" %}">
+                                    注入灵魂
+                                </button>
+                                <a href="{% url 'addCodes' %}" class="btn btn-primary btn-xs">管理人员请进
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>点数交换课程余量</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal" method="POST">
+                        {% csrf_token %}
+                        {% if errormsg2 %}
+                            <span style='color:red;'>{{ errormsg2 }}</span>
+                        {% endif %}
+                        <span class="help-block m-b-none">您当前可供兑换的点数为{{ points }}， 当前每门课程消耗{{ points_per_course }}点数， 您最多可兑换{{ availCourses }}个剩余课程量。</span>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">兑换课程数：</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" name="course_number" placeholder="" value="" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-8">
+                                <button class="btn btn-w-m btn-danger" type="submit" formaction="{% url "storeExchange" %}">
+                                    兑换课程量
+                                </button>
+                                <a href="{% url 'addCodes' %}" class="btn btn-primary btn-xs">管理人员请进
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 全局js -->
+<script src={% static "js/jquery.min.js" %}></script>
+<script src={% static "js/bootstrap.min.js" %}></script>
+
+<!-- 自定义js -->
+<script src={% static "js/content.js" %}></script>
+
+<!-- iCheck -->
+<script src="{% static "js/plugins/iCheck/icheck.min.js" %}"></script>
+<script>
+    $(document).ready(function () {
+        $('.i-checks').iCheck({
+            checkboxClass: 'icheckbox_square-green',
+            radioClass: 'iradio_square-green',
+        });
+    });
+</script>
+
+</body>
+
+</html>

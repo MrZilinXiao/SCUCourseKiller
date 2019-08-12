@@ -1,22 +1,21 @@
 # coding=utf-8
 
+import logging
+import time
+
+from django.contrib.auth import authenticate
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q, QuerySet
 from django.http import JsonResponse
 from django.shortcuts import render, HttpResponse, redirect
 
-from django.contrib.auth import login, logout
-from .models import UserProfile, User, notification as noti, courses
-from .forms import RegForm, LoginForm, AddCourseForm, AddjwcAccount
-from django.contrib.auth import authenticate
-from django.contrib.auth.decorators import login_required
-
 from . import jwcAccount as jwcVal
-from .models import jwcAccount as jwcModel
+from .forms import RegForm, LoginForm, AddCourseForm, AddjwcAccount
 from .jwcCourse import courseid2courses
-
-from django.db.models import Q
-
-import logging
-
+from .models import UserProfile, User, notification as noti, courses, codes
+from .models import jwcAccount as jwcModel
+from .storeBack import generate_code, utc2local
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +189,7 @@ def addCourse(request):
                 # notice = '剩余课程权限不足！'
                 # return render(request, 'courseManagement.html', locals())
             try:
-                jwcaccount = userprofile.jwcHost
+                jwcaccount = userprofile.jwcaccount
             except Exception as e:
                 print(e)
                 jwcaccount = None
@@ -236,7 +235,7 @@ def addCourse(request):
                 if kch != '':  # 有无课序号影响的是courseList长度是否为1
                     if keyword != '':
                         raise Exception("已经指定课程号的情况下请将关键词留空！")
-                    opener, _ = jwcVal.InitOpener()
+                    opener, _ = jwcVal.InitOpener(request.user.username)
                     try:
                         courseList = courseid2courses(opener, '', kch, kxh, term)
                     except Exception as e:
@@ -278,7 +277,7 @@ def addCourse(request):
                 elif keyword != '':
                     if kch != '' or kxh != '':
                         raise Exception("指定关键词时无法指定课程号与课序号！")
-                    opener, _ = jwcVal.InitOpener()
+                    opener, _ = jwcVal.InitOpener(request.user.username)
                     try:
                         courseList = courseid2courses(opener, keyword, '', '', term)
                     except Exception as e:
@@ -331,7 +330,7 @@ def jwcAccount(request):
             # filter返回QuerySet，直接if判断是否为空
             userprofile = UserQ.UserProfile
             try:
-                jwcaccount = userprofile.jwcHost
+                jwcaccount = userprofile.jwcaccount
             except Exception as e:
                 print(e)
                 jwcaccount = None
@@ -352,7 +351,7 @@ def jwcAccount(request):
                     if stuQuery:
                         raise Exception("学号已存在！")
                     try:
-                        cookie_dict = jwcVal.valjwcAccount(stuID, stuPass)
+                        cookie_dict = jwcVal.valjwcAccount(stuID, stuPass)  # 没有添加教务处账户之前先不用代理
                         user = User.objects.get(username=request.user.username)
                         jwc = jwcModel(jwcNumber=stuID, jwcPasswd=stuPass, userprofile=user.UserProfile,
                                        jwcCookie=str(cookie_dict))
@@ -384,14 +383,15 @@ def checkCookie(request):
                 raise Exception("你欲验证的学号不属于你！")
             cookieStr = jwcaccount.jwcCookie
             try:
-                valid = jwcVal.valCookie(cookieStr)
+                valid = jwcVal.valCookie(cookieStr, request.user.username)
                 errormsg = "Cookie有效！"
             except Exception as e:
                 errormsg = e  # HTTPError500（Invaild Session) 或者
         except Exception as e:
             errormsg = e  # 恶意请求 或 Cookie Invaild Session
         if str(errormsg) == "Cookie已经失效！已经更新为最新的Cookie！" or str(errormsg) == "HTTP Error 500: Internal Server Error":
-            jwcaccount.jwcCookie = str(jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd))
+            jwcaccount.jwcCookie = str(
+                jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd, request.user.username))
             jwcaccount.save()
             errormsg = "Cookie已经失效！已经更新为最新的Cookie！"
         return render(request, "jwcAccount.html", locals())
@@ -484,6 +484,7 @@ def CreateNotification(username, title, content):
     notifi = noti(host=UserQ, title=title, content=content)
     notifi.save()
     print("[%s][%s]%s" % (username, title, content))
+    logger.info("[%s][%s]%s" % (username, title, content))
 
 
 @login_required
@@ -558,7 +559,7 @@ def getCourseList(request):
             term = request.session["courseList"][id - 1]['term']
             type = request.session["courseList"][id - 1]['type']
             teacher = request.session["courseList"][id - 1]['teacher']
-            opener, _ = jwcVal.InitOpener()
+            opener, _ = jwcVal.InitOpener(request.user.username)
             find_same = courses.objects.filter(kch=kch, kxh=kxh)
             try:
                 if find_same:
@@ -591,3 +592,106 @@ def getCourseList(request):
         UserQ.UserProfile.save()
         del request.session["courseList"]
         return HttpResponse('success')
+
+
+@login_required
+def topup(request):
+    if request.method == 'GET':
+        points_per_course = 10.0
+        UserQ = User.objects.get(username=request.user.username)
+        points = UserQ.UserProfile.points
+        availCourses = int(points / points_per_course)
+        return render(request, 'store.html', locals())
+    if request.method == 'POST':
+        try:
+            code = request.POST.get('code')
+            try:
+                founded = codes.objects.get(code=code)
+            except Exception:
+                raise Exception("没有找到这串神秘代码！")
+
+            UserQ = User.objects.get(username=request.user.username)
+            userprofile = UserQ.UserProfile
+
+            founded.usedBy = request.user.username
+            founded.usedTime = time.strftime("%Y-%m-%d %H:%M:%S")
+            userprofile.points += founded.points
+            userprofile.save()
+            founded.save()
+            errormsg = "您已经成功通过神秘代码注入了" + str(founded.points) + "点数，您现在的点数为" + str(userprofile.points) + "！"
+            CreateNotification(username=request.user.username, title="神秘力量注入成功",
+                               content=errormsg)
+        except Exception as e:
+            errormsg = str(e)
+        return render(request, 'store.html', locals())
+
+
+@login_required
+def addCodes(request):
+    try:
+        UserQ = User.objects.get(username=request.user.username)
+        if UserQ.is_superuser == 0:
+            raise Exception("死骗子！你不是管理员！")
+        if request.method == 'POST':
+            n = request.POST.get('number')
+            points = request.POST.get('points')
+            codeList = generate_code(16, int(n))
+            for code in codeList:
+                savecode = codes(code=code, points=float(points), addBy=request.user.username)
+                savecode.save()
+            errormsg = "神秘代码添加成功，你成功添加了" + str(n) + "条点数为" + str(points) + "的神秘代码！"
+            CreateNotification(username=request.user.username, title="神秘代码添加成功",
+                               content=errormsg)
+            return render(request, 'addCodes.html', locals())
+        if request.method == 'GET':
+            return render(request, 'addCodes.html', locals())
+    except Exception as e:
+        errormsg = str(e)
+        return render(request, 'store.html', locals())
+
+
+@login_required
+def storeExchange(request):
+    points_per_course = 10.0
+    UserQ = User.objects.get(username=request.user.username)
+    points = UserQ.UserProfile.points
+    availCourses = int(points / points_per_course)
+    course_number = request.POST.get('course_number', None)
+    if course_number:
+        if int(course_number) <= availCourses:
+            UserQ.UserProfile.points -= points_per_course * int(course_number)
+            UserQ.UserProfile.courseRemainingCnt += int(course_number)
+            UserQ.UserProfile.save()
+            errormsg2 = "你成功使用了" + str(points_per_course * int(course_number)) + "个点数兑换了" + str(int(course_number)) + "个课程容量！"
+            CreateNotification(username=request.user.username, title="课程容量兑换成功",
+                               content=errormsg2)
+        else:
+            errormsg2 = "点数不足！你需要" + str(points_per_course * int(course_number)) + "个点数来完成此次兑换！"
+    return render(request, 'store.html', locals())
+
+
+@login_required
+def getCodesList(request):
+    if request.method == 'GET':
+        try:
+            page_codes = []
+            page = request.GET.get('page')
+            num = request.GET.get('rows')
+            right_boundary = int(page) * int(num)
+            codeSet: QuerySet[codes] = codes.objects.filter(addBy=request.user.username)
+            for i, code in enumerate(codeSet):
+                if code.usedBy == "":
+                    usedBy = "未使用"
+                else:
+                    usedBy = code.usedBy
+                local_time = utc2local(code.createTime)
+                LOCAL_FORMAT = "%Y-%m-%d %H:%M:%S"
+                create_time_str = local_time.strftime(LOCAL_FORMAT)
+                single_code = {'id': i + 1, 'code': code.code, 'points': code.points, 'usedBy': usedBy,
+                               'createTime': create_time_str}
+                page_codes.append(single_code)
+            total = len(codeSet)
+            page_codes = page_codes[int(num) * (int(page) - 1):right_boundary]
+            return JsonResponse({'total': total, 'rows': page_codes})  # 一点骚操作，异步前端操作真的不熟
+        except Exception as e:
+            raise e

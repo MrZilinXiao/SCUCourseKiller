@@ -4,24 +4,61 @@ from urllib import parse
 from urllib import request
 import requests
 from .config import *
+from retrying import retry
+from .models import User
 
 
-def InitOpener(cookie=None):
+@retry(stop_max_attempt_number=3)
+def getProxy(username):
+    UserQ = User.objects.get(username=username)
+    proxy_text = UserQ.UserProfile.jwcaccount.proxy
+    try:
+        if checkProxy(proxy_text):
+            Proxy = {'http': proxy_text}
+        else:
+            r = requests.get(proxy_pool_url)
+            Proxy = {'http': r.text}
+            UserQ.UserProfile.jwcaccount.proxy = r.text
+            UserQ.UserProfile.jwcaccount.save()
+        return Proxy
+    except:
+        print("Getting Proxy from pool Error...")
+
+
+@retry(stop_max_attempt_number=3)
+def checkProxy(proxy_text):
+    try:
+        if proxy_text:
+            proxy = {'http': proxy_text}
+            requests.get('http://wenshu.court.gov.cn/', proxies=proxy)
+            return True
+        else:
+            return False
+    except:
+        print("Connection Failed while using proxy:" + proxy_text)
+
+
+def InitOpener(username='', cookie=None):
     if cookie is None:
         cookie = http.cookiejar.CookieJar()
     cookie_support = request.HTTPCookieProcessor(cookie)
     # For Proxy
+    if username == '':
+        proxy = {}
+    else:
+        proxy = getProxy(username)
     proxy_handler = request.ProxyHandler(proxy)
+    # Get Latest Proxy every time?
     opener = request.build_opener(cookie_support, proxy_handler)
     return opener, cookie
 
 
-def valCookie(cookieStr):
+def valCookie(cookieStr, username=''):
     cookie_dict = eval(cookieStr)
     cookieJar = requests.utils.cookiejar_from_dict(cookie_dict)
     # cookie_support = request.HTTPCookieProcessor(cookieJar)
     # proxy_handler = request.ProxyHandler(proxy)
-    (opener, _) = InitOpener(cookieJar)
+    (opener, _) = InitOpener(username, cookieJar)
     testreq = request.Request(token_url, headers=headers)
     try:
         testVal = opener.open(testreq)
@@ -36,15 +73,15 @@ def valCookie(cookieStr):
         raise Exception(e)
 
 
-def valjwcAccount(stuID, stuPass):  # 可以更新Cookie
+def valjwcAccount(stuID, stuPass, username=''):  # 可以更新Cookie
     login_data = {
         'j_username': stuID,
         'j_password': stuPass,
         'j_captcha': 'error',
     }
-    [opener, cookie] = InitOpener()
+    [opener, cookie] = InitOpener(username=username)
     # Login
-    opener.open(request.Request("http://zhjw.scu.edu.cn/login", headers=headers))  # Get cookie
+    opener.open(request.Request(login_page_url, headers=headers))  # Get cookie
     login_data_parsed = parse.urlencode(login_data).encode("utf-8")
     loginRequest = request.Request(login_url, login_data_parsed, headers=headers)
     try:

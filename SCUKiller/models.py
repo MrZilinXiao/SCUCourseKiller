@@ -23,7 +23,8 @@ class jwcAccount(models.Model):
     jwcNumber = models.CharField('学号', max_length=100)
     jwcPasswd = models.CharField('密码', max_length=256)
     jwcCookie = models.CharField('Cookie', max_length=256)
-    userprofile = models.OneToOneField(UserProfile, primary_key=True, on_delete=models.DO_NOTHING, related_name="jwcHost")  # 不加默认值在2.18中报错？ 之前的migrations没删
+    proxy = models.CharField('代理IP', max_length=100, default='')
+    userprofile = models.OneToOneField(UserProfile, primary_key=True, on_delete=models.DO_NOTHING)  # 不加默认值在2.18中报错？ 之前的migrations没删
 
     class Meta:
         verbose_name = '教务处账号信息'
@@ -63,3 +64,12 @@ class notification(models.Model):
 
     class Meta:
         verbose_name = "通知"
+
+
+class codes(models.Model):
+    code = models.CharField('神秘代码', max_length=1000)
+    points = models.FloatField('点数', default=10.0)
+    usedBy = models.CharField('被谁使用', max_length=1000, default='')
+    addBy = models.CharField('由谁加入', max_length=1000, default='')
+    createTime = models.DateTimeField('添加时间', auto_now_add=True)
+    usedTime = models.CharField('使用时间', max_length=1000)

@@ -91,12 +91,12 @@ def watchCourses():
             continue
         jwc = course.host.jwcHost
         try:  # 检查Cookie或账号是否失效
-            jwcVal.valCookie(jwc.jwcCookie)
+            jwcVal.valCookie(jwc.jwcCookie, course.host.user.username)
         except Exception as e:
             print(e, jwc.jwcNumber)
             if str(e) == 'Cookie已经失效！已经更新为最新的Cookie！':
                 try:
-                    jwc.jwcCookie = str(jwcVal.valjwcAccount(jwc.jwcNumber, jwc.jwcPasswd))
+                    jwc.jwcCookie = str(jwcVal.valjwcAccount(jwc.jwcNumber, jwc.jwcPasswd, course.host.user.username))
                     jwc.save()
                     CreateNotification(course.host.user.username, "Cookie更新提示",
                                        "在一次监测中发现您的Cookie已经失效，已经成功为您更新Cookie，请确保在未选中心仪的课程之前不要登录教务处网站！")
@@ -111,7 +111,7 @@ def watchCourses():
                     CreateNotification(course.host.user.username, "教务处账号失效提示",
                                        "在一次监测中发现无法登录您的教务处账号，请前去删除您的所有课程并重新绑定教务处账号！")
                     continue
-        (opener, cookie) = jwcVal.InitOpener(jwc.jwcCookie)
+        (opener, cookie) = jwcVal.InitOpener(course.host.user.username, jwc.jwcCookie)
         try:  # 在函数内部判断是关键词模式还是指定课程模式
             availCourse = specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
                                         course.term)  # 返回一个可选课程列表

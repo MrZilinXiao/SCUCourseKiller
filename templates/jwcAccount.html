@@ -64,6 +64,12 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label class="col-sm-3 control-label">代理 (For Debug)：</label>
+                                <div class="col-sm-8">
+                                    <input type="text" disabled="" placeholder="{{ jwcaccount.proxy }}" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <div class="col-sm-offset-3 col-sm-8">
                                     <button class="btn btn-w-m btn-danger" type="submit" formaction="{% url "deljwcAccount" %}">解除绑定</button>
                                     <button class="btn btn-w-m btn-info" type="submit" formaction="{% url "checkCookie" %}">检查Cookie有效性</button>

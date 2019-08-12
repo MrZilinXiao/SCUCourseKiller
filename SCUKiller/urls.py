@@ -13,7 +13,10 @@ urlpatterns = [
     url(r'^courseManagement/$', views.courseManagement, name="courseManagement"),
     # url(r'^accountManagement/$', views.accountManagement, name="accountManagement"),
 
-
+    url(r'^topup$', views.topup, name="topup"),
+    url(r'^addCodes$', views.addCodes, name="addCodes"),
+    url(r'^getCodesList$', views.getCodesList, name="getCodesList"),
+    url(r'^storeExchange$', views.storeExchange, name="storeExchange"),
     url(r'^addCourse$', views.addCourse, name="addCourse"),
     url(r'^jwcAccount$', views.jwcAccount, name="jwcAccount"),
     url(r'^deljwcAccount$', views.deljwcAccount, name="deljwcAccount"),
