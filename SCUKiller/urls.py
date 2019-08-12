@@ -19,6 +19,7 @@ urlpatterns = [
     url(r'^deljwcAccount$', views.deljwcAccount, name="deljwcAccount"),
     url(r'^alterUserinfo$', views.alterUserinfo, name="alterUserinfo"),
     url(r'^delReadNotification$', views.delReadNotification, name="delReadNotification"),
+    url(r'^delNotification$', views.delNotification, name="delNotification"),
 
 
     url(r'^watcher', watcher.watchCourses, name="watcher"),

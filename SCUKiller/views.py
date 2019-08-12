@@ -16,6 +16,7 @@ from .jwcCourse import courseid2courses
 from django.db.models import Q
 
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +238,7 @@ def addCourse(request):
                         raise Exception("已经指定课程号的情况下请将关键词留空！")
                     opener, _ = jwcVal.InitOpener()
                     try:
-                        courseList = courseid2courses(opener, kch, kxh, term)
+                        courseList = courseid2courses(opener, '', kch, kxh, term)
                     except Exception as e:
                         logger.error(str(e))
                         print(e)
@@ -252,18 +253,21 @@ def addCourse(request):
                     #     location = courseList[0]['jxlm'] + " " + courseList[0]['jasm']
                     else:
                         if kxh == '':  # 仅课程号进入前端选择模式
-                            json_parsed = {"pageSize": 0, "pageNum": 0, "total": min(10, len(courseList)), "offset": 0,
-                                           'rows': []}
-                            for i in range(1, len(courseList)+1):
-                                json_parsed['rows'].append({})
-                                json_parsed['rows'][i - 1]['id'] = i
-                                json_parsed['rows'][i - 1]['kcm'] = courseList[i - 1]['kcm']
-                                json_parsed['rows'][i - 1]['kch'] = courseList[i - 1]['kch']
-                                json_parsed['rows'][i - 1]['kxh'] = courseList[i - 1]['kxh']
-                                json_parsed['rows'][i - 1]['term'] = courseList[i - 1]['zxjxjhh']
-                                json_parsed['rows'][i - 1]['teacher'] = courseList[i - 1]['skjs']
-                                json_parsed['rows'][i - 1]['type'] = ctype
-                            request.session["courseList"] = json_parsed
+                            for i in range(len(courseList) - 1, -1, -1):
+                                if i > 0 and courseList[i]['kch'] == courseList[i - 1]['kch'] and courseList[i][
+                                    'kxh'] == courseList[i - 1]['kxh']:  # 去除有多节课的单一课程
+                                    courseList.pop(i)
+                            rows = []
+                            for j in range(1, len(courseList) + 1):
+                                rows.append({})
+                                rows[j - 1]['id'] = j
+                                rows[j - 1]['kcm'] = courseList[j - 1]['kcm']
+                                rows[j - 1]['kch'] = courseList[j - 1]['kch']
+                                rows[j - 1]['kxh'] = courseList[j - 1]['kxh']
+                                rows[j - 1]['term'] = courseList[j - 1]['zxjxjhh']
+                                rows[j - 1]['teacher'] = courseList[j - 1]['skjs']
+                                rows[j - 1]['type'] = ctype
+                            request.session["courseList"] = rows
                             raise Exception("请在右侧的课程列表中选择需要监控的课程并提交！")
                         else:  # 整合信息
                             kcm = courseList[0]['kcm']
@@ -271,6 +275,35 @@ def addCourse(request):
                             campus = courseList[0]['xqm']
                             for i, c in enumerate(courseList):
                                 location += (str(i + 1) + "：" + c['jxlm'] + " " + c['jasm'] + "\n")
+                elif keyword != '':
+                    if kch != '' or kxh != '':
+                        raise Exception("指定关键词时无法指定课程号与课序号！")
+                    opener, _ = jwcVal.InitOpener()
+                    try:
+                        courseList = courseid2courses(opener, keyword, '', '', term)
+                    except Exception as e:
+                        logger.error(str(e))
+                        print(e)
+                        raise Exception(e)
+                    if len(courseList) == 0:
+                        raise Exception("由你提供的课程号与课序号无法查找到对应的课程，请检查输入是否正确！")
+                    else:
+                        for i in range(len(courseList) - 1, -1, -1):
+                            if i > 0 and courseList[i]['kch'] == courseList[i - 1]['kch'] and courseList[i]['kxh'] == \
+                                    courseList[i - 1]['kxh']:  # 去除有多节课的单一课程
+                                courseList.pop(i)
+                        rows = []
+                        for j in range(1, len(courseList) + 1):
+                            rows.append({})
+                            rows[j - 1]['id'] = j
+                            rows[j - 1]['kcm'] = courseList[j - 1]['kcm']
+                            rows[j - 1]['kch'] = courseList[j - 1]['kch']
+                            rows[j - 1]['kxh'] = courseList[j - 1]['kxh']
+                            rows[j - 1]['term'] = courseList[j - 1]['zxjxjhh']
+                            rows[j - 1]['teacher'] = courseList[j - 1]['skjs']
+                            rows[j - 1]['type'] = ctype
+                        request.session["courseList"] = rows
+                        raise Exception("请在右侧的课程列表中选择需要监控的课程并提交！")
                 UserQ.UserProfile.courseRemainingCnt -= 1
                 UserQ.UserProfile.courseCnt += 1
                 UserQ.UserProfile.save()
@@ -354,12 +387,13 @@ def checkCookie(request):
                 valid = jwcVal.valCookie(cookieStr)
                 errormsg = "Cookie有效！"
             except Exception as e:
-                errormsg = e  # Cookie失效
+                errormsg = e  # HTTPError500（Invaild Session) 或者
         except Exception as e:
-            errormsg = e  # 恶意请求 或 Cookie InvaildSession
-        if str(errormsg) == "Cookie已经失效！已经更新为最新的Cookie！":
+            errormsg = e  # 恶意请求 或 Cookie Invaild Session
+        if str(errormsg) == "Cookie已经失效！已经更新为最新的Cookie！" or str(errormsg) == "HTTP Error 500: Internal Server Error":
             jwcaccount.jwcCookie = str(jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd))
             jwcaccount.save()
+            errormsg = "Cookie已经失效！已经更新为最新的Cookie！"
         return render(request, "jwcAccount.html", locals())
 
 
@@ -391,18 +425,18 @@ def deljwcAccount(request):
     if request.user.is_authenticated:
         if request.method == 'POST':
             delNumber = request.POST.get('delNumber')
-            jwcAcc = jwcModel.objects.get(jwcNumber=delNumber)
+            jwcaccount = jwcModel.objects.get(jwcNumber=delNumber)
             try:
-                if not jwcAcc:
+                if not jwcaccount:
                     raise Exception("删除的学号不存在！")
-                if request.user.username != jwcAcc.userprofile.user.username:
+                if request.user.username != jwcaccount.userprofile.user.username:
                     raise Exception("你欲删除的学号不属于你！")
                 UserQ = User.objects.get(username=request.user.username)
                 remainingCourses = courses.objects.filter(host=UserQ.UserProfile)
                 remainingCourses = remainingCourses.filter(~Q(isSuccess=1))
                 if remainingCourses:
                     raise Exception("你还有未完成的课程！")
-                jwcAcc.delete()
+                jwcaccount.delete()
                 CreateNotification(username=request.user.username, title="教务处账号解绑成功",
                                    content="您已经成功解绑学号为" + str(delNumber) + "的教务处账号！")
                 errormsg = "解绑成功！"
@@ -470,14 +504,45 @@ def delReadNotification(request):
 
 
 @login_required
+def delNotification(request):
+    nList = noti.objects.filter(host=request.user)
+    for item in nList:
+        item.delete()
+    return JsonResponse({'msg': 'success'})
+
+
+@login_required
 def getCourseList(request):
     if request.method == 'GET':
         try:
-            return JsonResponse(request.session["courseList"])  # 一点骚操作，异步前端操作真的不熟
+            page_course = []
+            idExist = []
+            search_kw = request.GET.get('search_kw', None)
+            page = request.GET.get('page')
+            num = request.GET.get('rows')
+            right_boundary = int(page) * int(num)
+            try:
+                cList = request.session["courseList"]
+            except KeyError as e:
+                raise e
+            for cour in cList:
+                for value in cour.values():
+                    if search_kw:
+                        if search_kw in str(value) and cour['id'] not in idExist:
+                            page_course.append(cour)
+                            idExist.append(cour['id'])
+                    else:
+                        if cour['id'] not in idExist:
+                            page_course.append(cour)
+                            idExist.append(cour['id'])
+            total = len(page_course)
+            page_course = page_course[int(num) * (int(page) - 1):right_boundary]
+            return JsonResponse({'total': total, 'rows': page_course})  # 一点骚操作，异步前端操作真的不熟
         except KeyError:
-            return HttpResponse(1)  # 正常情况
+            return HttpResponse(1)  # 第一次还没有session
         except Exception as e:
             raise e
+
     if request.method == 'POST':
         UserQ = User.objects.get(username=request.user.username)
         host = UserQ.UserProfile
@@ -486,13 +551,13 @@ def getCourseList(request):
         for id in ids.split(","):
             idList.append(int(id))
         for id in idList:
-            kcm = request.session["courseList"]['rows'][id-1]['kcm']
-            kch = request.session["courseList"]['rows'][id - 1]['kch']
-            kxh = request.session["courseList"]['rows'][id - 1]['kxh']
-            kcm = request.session["courseList"]['rows'][id - 1]['kcm']
-            term = request.session["courseList"]['rows'][id - 1]['term']
-            type = request.session["courseList"]['rows'][id - 1]['type']
-            teacher = request.session["courseList"]['rows'][id - 1]['teacher']
+            kcm = request.session["courseList"][id - 1]['kcm']
+            kch = request.session["courseList"][id - 1]['kch']
+            kxh = request.session["courseList"][id - 1]['kxh']
+            kcm = request.session["courseList"][id - 1]['kcm']
+            term = request.session["courseList"][id - 1]['term']
+            type = request.session["courseList"][id - 1]['type']
+            teacher = request.session["courseList"][id - 1]['teacher']
             opener, _ = jwcVal.InitOpener()
             find_same = courses.objects.filter(kch=kch, kxh=kxh)
             try:
@@ -506,7 +571,7 @@ def getCourseList(request):
             except Exception as e:
                 continue  # 跳过重复课程
             try:
-                courseList = courseid2courses(opener, kch, kxh, term)
+                courseList = courseid2courses(opener, '', kch, kxh, term)
             except Exception as e:
                 logger.error(str(e))
                 print(e)

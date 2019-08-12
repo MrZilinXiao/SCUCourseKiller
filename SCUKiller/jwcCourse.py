@@ -11,14 +11,14 @@ from .config import *
 import json
 
 
-def courseid2courses(opener, kch, kxh, term):
+def courseid2courses(opener, kcm='', kch='', kxh='', term=''):
     # 根据课程号、课序号获取具体课程信息
 
     # post 参数样例：zxjxjhh=2019-2020-1-1&kch=999008030&kcm=&js=&kkxs=&skxq=&skjc=&xq=&jxl=&jas=&pageNum=1&pageSize=30&kclb=
     post_params = {
         'zxjxjhh': term,
         'kch': kch,
-        'kcm': '',
+        'kcm': kcm,
         'js': '',
         'kkxs': '',
         'skxq': '',
