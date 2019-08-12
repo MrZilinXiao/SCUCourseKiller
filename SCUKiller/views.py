@@ -235,7 +235,7 @@ def addCourse(request):
                 if kch != '':  # 有无课序号影响的是courseList长度是否为1
                     if keyword != '':
                         raise Exception("已经指定课程号的情况下请将关键词留空！")
-                    opener, _ = jwcVal.InitOpener(request.user.username)
+                    opener, _ = jwcVal.InitOpener()
                     try:
                         courseList = courseid2courses(opener, '', kch, kxh, term)
                     except Exception as e:
@@ -277,7 +277,7 @@ def addCourse(request):
                 elif keyword != '':
                     if kch != '' or kxh != '':
                         raise Exception("指定关键词时无法指定课程号与课序号！")
-                    opener, _ = jwcVal.InitOpener(request.user.username)
+                    opener, _ = jwcVal.InitOpener()
                     try:
                         courseList = courseid2courses(opener, keyword, '', '', term)
                     except Exception as e:
@@ -559,7 +559,7 @@ def getCourseList(request):
             term = request.session["courseList"][id - 1]['term']
             type = request.session["courseList"][id - 1]['type']
             teacher = request.session["courseList"][id - 1]['teacher']
-            opener, _ = jwcVal.InitOpener(request.user.username)
+            opener, _ = jwcVal.InitOpener()  # 公共查询不用代理
             find_same = courses.objects.filter(kch=kch, kxh=kxh)
             try:
                 if find_same:
