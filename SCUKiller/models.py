@@ -1,7 +1,5 @@
 from django.db import models
 
-from django.db import models
-
 # Create your models here.
 from django.contrib.auth.models import User
 
@@ -25,7 +23,7 @@ class jwcAccount(models.Model):
     jwcNumber = models.CharField('学号', max_length=100)
     jwcPasswd = models.CharField('密码', max_length=256)
     jwcCookie = models.CharField('Cookie', max_length=256)
-    userprofile = models.OneToOneField(UserProfile, primary_key=True, on_delete=models.DO_NOTHING, related_name="jwcHost")
+    userprofile = models.OneToOneField(UserProfile, primary_key=True, on_delete=models.DO_NOTHING, related_name="jwcHost")  # 不加默认值在2.18中报错？ 之前的migrations没删
 
     class Meta:
         verbose_name = '教务处账号信息'

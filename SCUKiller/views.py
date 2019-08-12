@@ -16,7 +16,7 @@ from .jwcCourse import courseid2courses
 from django.db.models import Q
 
 import logging
-import json
+
 
 logger = logging.getLogger(__name__)
 
