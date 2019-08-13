@@ -301,6 +301,7 @@ def addCourse(request):
                             rows[j - 1]['term'] = courseList[j - 1]['zxjxjhh']
                             rows[j - 1]['teacher'] = courseList[j - 1]['skjs']
                             rows[j - 1]['type'] = ctype
+                            rows[j - 1]['keyword'] = keyword
                         request.session["courseList"] = rows
                         raise Exception("请在右侧的课程列表中选择需要监控的课程并提交！")
                 UserQ.UserProfile.courseRemainingCnt -= 1
@@ -394,6 +395,7 @@ def checkCookie(request):
                 jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd, request.user.username))
             jwcaccount.save()
             errormsg = "Cookie已经失效！已经更新为最新的Cookie！"
+            jwcaccount = jwcModel.objects.get(jwcNumber=checkNumber)
         return render(request, "jwcAccount.html", locals())
 
 
@@ -552,6 +554,10 @@ def getCourseList(request):
         for id in ids.split(","):
             idList.append(int(id))
         for id in idList:
+            if request.session["courseList"][id - 1].has_key('keyword'):
+                keyword = request.session["courseList"][id - 1]['keyword']
+            else:
+                keyword = ''
             kcm = request.session["courseList"][id - 1]['kcm']
             kch = request.session["courseList"][id - 1]['kch']
             kxh = request.session["courseList"][id - 1]['kxh']
@@ -582,7 +588,7 @@ def getCourseList(request):
             for i, c in enumerate(courseList):
                 location += (str(i + 1) + "：" + c['jxlm'] + " " + c['jasm'] + "\n")
             course = courses(kch=kch, kxh=kxh, kcm=kcm, host=host, type=type, term=term,
-                             teacher=teacher, campus=campus, location=location)
+                             teacher=teacher, campus=campus, location=location, keyword=keyword)
             course.save()
             CreateNotification(username=request.user.username, title="批量课程添加成功",
                                content="您已经成功通过多选课程的方式，添加课程号为" + str(kch) + "，课序号为" + str(kxh) + "的课程《" + kcm + "》！")
@@ -662,7 +668,8 @@ def storeExchange(request):
             UserQ.UserProfile.points -= points_per_course * int(course_number)
             UserQ.UserProfile.courseRemainingCnt += int(course_number)
             UserQ.UserProfile.save()
-            errormsg2 = "你成功使用了" + str(points_per_course * int(course_number)) + "个点数兑换了" + str(int(course_number)) + "个课程容量！"
+            errormsg2 = "你成功使用了" + str(points_per_course * int(course_number)) + "个点数兑换了" + str(
+                int(course_number)) + "个课程容量！"
             CreateNotification(username=request.user.username, title="课程容量兑换成功",
                                content=errormsg2)
         else:
