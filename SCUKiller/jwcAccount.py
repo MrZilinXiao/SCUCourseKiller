@@ -56,13 +56,11 @@ def InitOpener(username='', cookie=None):
 def valCookie(cookieStr, username=''):
     cookie_dict = eval(cookieStr)
     cookieJar = requests.utils.cookiejar_from_dict(cookie_dict)
-    # cookie_support = request.HTTPCookieProcessor(cookieJar)
-    # proxy_handler = request.ProxyHandler(proxy)
     (opener, _) = InitOpener(username, cookieJar)
     testreq = request.Request(token_url, headers=headers)
     try:
         testVal = opener.open(testreq)
-        if testVal.url == 'http://zhjw.scu.edu.cn/login':
+        if testVal.url == 'http://zhjw.scu.edu.cn/login':  # 如果指向登录页面 说明cookie过期或失效
             raise Exception("Cookie已经失效！已经更新为最新的Cookie！")
         return True
     except error.HTTPError as e:
@@ -90,4 +88,7 @@ def valjwcAccount(stuID, stuPass, username=''):  # 可以更新Cookie
         return cookie_dict
     except error.HTTPError as e:
         print(e)
-        raise Exception("Invalid Login Info")
+        if e.filename == 'http://zhjw.scu.edu.cn/login?errorCode=badCredentials':
+            raise Exception("密码错误！请删除教务处账号后重新添加！在监控期间请不要修改教务处密码！")
+        else:
+            raise Exception("登陆时遭遇未知错误！")

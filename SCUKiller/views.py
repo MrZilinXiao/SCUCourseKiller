@@ -122,7 +122,7 @@ def logIn(request):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
-                    logger.info(user + "登录成功！")
+                    logger.info("登录成功！")
                     return redirect(request.session['login_from'])
                 elif captcha != request.session['CheckCode'].lower():
                     errormsg = "验证码错误"
@@ -253,7 +253,7 @@ def addCourse(request):
                         logger.error(str(e))
                         print(e)
                         raise Exception(e)
-                    # TODO:都给出时需要获取课程名
+                    # DONE:都给出时需要获取课程名
                     if len(courseList) == 0:
                         raise Exception("由你提供的课程号与课序号无法查找到对应的课程，请检查输入是否正确！")
                     # elif len(courseList) == 1:  # 注意courseList的查询结果是按一周上课节次来的，可能重复
@@ -280,6 +280,7 @@ def addCourse(request):
                             request.session["courseList"] = rows
                             raise Exception("请在右侧的课程列表中选择需要监控的课程并提交！")
                         else:  # 整合信息
+                            # 下面是给定课程号 课序号的业务逻辑
                             kcm = courseList[0]['kcm']
                             teacher = courseList[0]['skjs']
                             campus = courseList[0]['xqm']
@@ -315,6 +316,7 @@ def addCourse(request):
                             rows[j - 1]['keyword'] = keyword
                         request.session["courseList"] = rows
                         raise Exception("请在右侧的课程列表中选择需要监控的课程并提交！")
+                # 下面是给定课程号 课序号的业务逻辑
                 UserQ.UserProfile.courseRemainingCnt -= 1
                 UserQ.UserProfile.courseCnt += 1
                 UserQ.UserProfile.save()
@@ -398,15 +400,21 @@ def checkCookie(request):
                 valid = jwcVal.valCookie(cookieStr, request.user.username)
                 errormsg = "Cookie有效！"
             except Exception as e:
-                errormsg = e  # HTTPError500（Invaild Session) 或者
+                errormsg = e  # HTTP Error 500（Invaild Session) 或者 HTTP Error 302: Moved Temporarily
         except Exception as e:
             errormsg = e  # 恶意请求 或 Cookie Invaild Session
-        if str(errormsg) == "Cookie已经失效！已经更新为最新的Cookie！" or str(errormsg) == "HTTP Error 500: Internal Server Error":
-            jwcaccount.jwcCookie = str(
-                jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd, request.user.username))
-            jwcaccount.save()
-            errormsg = "Cookie已经失效！已经更新为最新的Cookie！"
-            jwcaccount = jwcModel.objects.get(jwcNumber=checkNumber)
+        if str(errormsg) == "Cookie已经失效！已经更新为最新的Cookie！" or str(
+                errormsg) == "HTTP Error 500: Internal Server Error" or str(
+                errormsg) == "HTTP Error 302: Moved Temporarily":
+            try:
+                jwcaccount.jwcCookie = str(
+                    jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd,
+                                         request.user.username))  # 可能遇见：1.密码已被修改 需要抛出密码错误 2.用账密登陆时的未知错误
+                jwcaccount.save()
+                errormsg = "Cookie已经失效！已经更新为最新的Cookie！"
+                jwcaccount = jwcModel.objects.get(jwcNumber=checkNumber)
+            except Exception as e:
+                errormsg = str(e)
         return render(request, "jwcAccount.html", locals())
 
 
@@ -685,6 +693,8 @@ def storeExchange(request):
                                content=errormsg2)
         else:
             errormsg2 = "点数不足！你需要" + str(points_per_course * int(course_number)) + "个点数来完成此次兑换！"
+    points = UserQ.UserProfile.points  # 查询新的
+    availCourses = int(points / points_per_course)
     return render(request, 'store.html', locals())
 
 
