@@ -24,7 +24,8 @@ class jwcAccount(models.Model):
     jwcPasswd = models.CharField('密码', max_length=256)
     jwcCookie = models.CharField('Cookie', max_length=256)
     proxy = models.CharField('代理IP', max_length=100, default='')
-    userprofile = models.OneToOneField(UserProfile, primary_key=True, on_delete=models.DO_NOTHING)  # 不加默认值在2.18中报错？ 之前的migrations没删
+    userprofile = models.OneToOneField(UserProfile, primary_key=True,
+                                       on_delete=models.DO_NOTHING)  # 不加默认值在2.18中报错？ 之前的migrations没删
 
     class Meta:
         verbose_name = '教务处账号信息'
@@ -73,3 +74,16 @@ class codes(models.Model):
     addBy = models.CharField('由谁加入', max_length=1000, default='')
     createTime = models.DateTimeField('添加时间', auto_now_add=True)
     usedTime = models.CharField('使用时间', max_length=1000)
+
+
+class Orders(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='Orders')
+    method = models.CharField('支付方式', max_length=100, default='')  # 支付宝 微信
+    trade_no = models.CharField('商户单号', max_length=100, default='')
+    platform_no = models.CharField('第三方平台单号', max_length=100, default='')
+    payment_tool_no = models.CharField('用户支付工具单号', max_length=100, default='')
+    body = models.CharField('订单标题', max_length=1000, default='')
+    total_fee = models.FloatField('订单金额')  # 1.33 以元为单位
+    addTime = models.DateTimeField('订单生成时间', auto_now_add=True)
+    payTime = models.CharField('订单支付时间', max_length=1000)
+    status = models.IntegerField('状态', default=0)  # 0--等待 -1--失败 1---成功

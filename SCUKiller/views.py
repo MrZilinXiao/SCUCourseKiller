@@ -2,6 +2,12 @@
 
 import logging
 import time
+import re
+import json
+
+import requests
+
+import SCUKiller.pay as pay
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import login, logout
@@ -9,13 +15,15 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, QuerySet
 from django.http import JsonResponse
 from django.shortcuts import render, HttpResponse, redirect
+from django.views.decorators.csrf import csrf_exempt
 
 from . import jwcAccount as jwcVal
 from .forms import RegForm, LoginForm, AddCourseForm, AddjwcAccount
 from .jwcCourse import courseid2courses
-from .models import UserProfile, User, notification as noti, courses, codes
+from .models import UserProfile, User, notification as noti, courses, codes, Orders
 from .models import jwcAccount as jwcModel
 from .storeBack import generate_code, utc2local
+from .config import *
 
 logger = logging.getLogger(__name__)
 
@@ -104,10 +112,9 @@ def logIn(request):
             captcha = form.cleaned_data['captcha'].strip()
             if username != '' and password != '' and captcha == request.session['CheckCode'].lower():
                 user = authenticate(username=username, password=password)
-                print(user)
                 if user is not None:
                     login(request, user)
-                    print(u"登录成功！")
+                    logger.info(user + "登录成功！")
                     return redirect(request.session['login_from'])
                 elif captcha != request.session['CheckCode'].lower():
                     errormsg = "验证码错误"
@@ -186,8 +193,6 @@ def addCourse(request):
             userprofile = UserQ.UserProfile
             if userprofile.courseRemainingCnt <= 0:
                 raise Exception('剩余课程权限不足！')
-                # notice = '剩余课程权限不足！'
-                # return render(request, 'courseManagement.html', locals())
             try:
                 jwcaccount = userprofile.jwcaccount
             except Exception as e:
@@ -195,8 +200,6 @@ def addCourse(request):
                 jwcaccount = None
             if jwcaccount is None:
                 raise Exception('您尚未绑定教务处账号！')
-                # notice = '您尚未绑定教务处账号！'
-                # return render(request, 'courseManagement.html', locals())
             if form.is_valid():
                 UserQ = User.objects.get(username=request.user.username)
                 keyword = form.cleaned_data['keyword']
@@ -702,3 +705,119 @@ def getCodesList(request):
             return JsonResponse({'total': total, 'rows': page_codes})  # 一点骚操作，异步前端操作真的不熟
         except Exception as e:
             raise e
+
+
+# 支付相关
+@login_required
+def wxpay(request):
+    response = Pay(request, 'WeChat')
+    return response
+
+
+@login_required
+def alipay(request):
+    response = Pay(request, 'AliPay')
+    return response
+
+
+def Pay(request, method):
+    try:
+        if request.method == 'POST':
+            UserQ = User.objects.get(username=request.user.username)
+            total_fee = request.POST['amount']
+            fee_pattern = "(^[1-9](\d+)?(\.\d{1,2})?$)|(^0$)|(^\d\.\d{1,2}$)"  # 匹配金额正则
+            pattern = re.compile(fee_pattern)
+            match = pattern.match(total_fee)
+            if match is None:
+                raise Exception("金额不合法！")
+            amount = int(float(total_fee) * 100)
+            self_order_num = pay.order_num(UserQ.UserProfile.telephone)
+            body = '注入' + total_fee + '神秘点数'
+            post_paras = {
+                'mch_id': mch_id,
+                'total_fee': amount,
+                'out_trade_no': self_order_num,
+                'body': body,
+                'user_id': UserQ.UserProfile.uid
+            }
+            sign = pay.get_sign(post_paras, secret_key)
+            post_paras['sign'] = sign
+            if method == 'WeChat':
+                url = wxpay_url
+            else:
+                url = alipay_url
+            response = requests.post(url=url, data=post_paras, timeout=3)
+            response_dict = response.json()
+            if response_dict['return_code'] != 0:
+                raise Exception(
+                    "请求错误，错误代码：" + response_dict['return_code'] + "，错误信息：" + response_dict['return_message'])
+            else:
+                qrcode = response_dict['qrcode']
+                platform_order_no = response_dict['order_no']
+                order = Orders(user=UserQ, method=method, trade_no=self_order_num, platform_no=platform_order_no,
+                               body=body, total_fee=total_fee)
+                order.save()
+                return JsonResponse(
+                    {'status': 200, 'qrcode': qrcode, 'amount': amount / 100, 'order_no': self_order_num})
+    except Exception as e:
+        errormsgpay = str(e)
+        logger.error(errormsgpay)
+        return JsonResponse({'status': 400, 'msg': errormsgpay})
+
+
+@login_required
+def check_pay(request):
+    if request.is_ajax:
+        order_num = request.POST.get('order_num')
+        order = Orders.objects.get(trade_no=order_num)
+        if order.status == 1:
+            CreateNotification(username=request.user.username, title="添加点数成功",
+                               content="你已经通过PY交易成功添加了" + str(order.total_fee) + "的点数！订单号：" + order.trade_no)
+            order.status = 2  # 2--通知已到位
+            order.save()
+        return HttpResponse(int(order.status))
+
+
+@login_required
+def cancel_order(request):
+    if request.is_ajax:
+        order_num = request.POST.get('order_num')
+        order = Orders.objects.get(trade_no=order_num)  # 在知道订单号的情况下允许其他用户取消订单
+        if order.status == 0:
+            order.status = -1
+            order.save()
+        post_paras = {
+            'mch_id': mch_id,
+            'trade_no': order.platform_no,
+        }
+        sign = pay.get_sign(post_paras, secret_key)
+        post_paras['sign'] = sign
+        response = requests.post(url=cancel_url, data=post_paras, timeout=3)
+        response_dict = response.json()
+
+        return HttpResponse(int(order.status))
+
+
+@csrf_exempt
+def paycat_callback(request):
+    if request.method == 'POST':
+        data_dict = json.load(request.body)
+        sign = data_dict.pop('sign')
+        back_sign = pay.get_sign(data_dict, secret_key)
+        if sign == back_sign:
+            if request.POST.get('notify_type') == 'order.succeeded':
+                self_trade_no = data_dict['out_trade_no']
+                total_fee = data_dict['total_fee']
+                transaction_id = data_dict['transaction_id']
+                payTime = data_dict['pay_at']
+                order = Orders.objects.get(trade_no=self_trade_no)
+                if total_fee == order.total_fee * 100:
+                    order.payment_tool_no = transaction_id
+                    order.payTime = payTime
+                    order.status = 1
+                    order.save()
+                    return HttpResponse(1)
+                else:
+                    raise Exception('金额效验失败！')
+        else:
+            raise Exception('签名效验失败！')

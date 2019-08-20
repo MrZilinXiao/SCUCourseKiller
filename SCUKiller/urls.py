@@ -11,7 +11,6 @@ urlpatterns = [
     url(r'^register/$', views.register, name="register"),
     url(r'^notification/$', views.notification, name="notification"),
     url(r'^courseManagement/$', views.courseManagement, name="courseManagement"),
-    # url(r'^accountManagement/$', views.accountManagement, name="accountManagement"),
 
     url(r'^topup$', views.topup, name="topup"),
     url(r'^addCodes$', views.addCodes, name="addCodes"),
@@ -30,5 +29,10 @@ urlpatterns = [
     url(r'^checkUsername', views.checkUsername, name="checkUsername"),
     url(r'^checkCookie', views.checkCookie, name="checkCookie"),
     url(r'^getCourseList', views.getCourseList, name="getCourseList"),
+
+    url(r'^wxpay', views.wxpay, name="wxpay"),
+    url(r'^alipay', views.alipay, name="alipay"),
+    url(r'^check_pay', views.check_pay, name="check_pay"),
+    url(r'^paycat_callback', views.paycat_callback, name="pay_callback"),
 
 ]

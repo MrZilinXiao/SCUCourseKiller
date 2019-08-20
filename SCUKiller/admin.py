@@ -6,3 +6,5 @@ from .models import *
 admin.site.register(UserProfile, )
 admin.site.register(jwcAccount, )
 admin.site.register(courses, )
+admin.site.register(codes, )
+admin.site.register(notification, )
