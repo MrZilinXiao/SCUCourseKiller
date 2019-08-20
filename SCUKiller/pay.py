@@ -18,7 +18,7 @@ def random_str(randomlength=8):
     :return:
     """
     str = ''
-    chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789'
+    chars = '0123456789'
     length = len(chars) - 1
     random = Random()
     for i in range(randomlength):
@@ -26,21 +26,21 @@ def random_str(randomlength=8):
     return str
 
 
-def order_num(phone):
+def order_num():
     """
     生成扫码付款订单号
     :param phone: 手机号
     :return:
     """
     local_time = time.strftime('%Y%m%d%H%M%S', time.localtime(time.time()))
-    result = phone + 'T' + local_time + random_str(5)
+    result = 'T' + local_time + random_str(8)
     return result
 
 
 def get_sign(data_dict, key):
     # 签名函数，参数为签名的数据和密钥
     params_list = sorted(data_dict.items(), key=lambda e: e[0], reverse=False)  # 参数字典倒排序为列表
-    params_str = "&".join(u"{}={}".format(k, v) for k, v in params_list) + '&key=' + key
+    params_str = "&".join(u"{}={}".format(k, v) for k, v in params_list if v != '') + '&key=' + key
     # 组织参数字符串并在末尾添加商户交易密钥
     md5 = hashlib.md5()  # 使用MD5加密模式
     md5.update(params_str.encode('utf-8'))  # 将参数字符串传入

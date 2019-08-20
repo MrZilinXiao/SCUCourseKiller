@@ -23,7 +23,6 @@ urlpatterns = [
     url(r'^delReadNotification$', views.delReadNotification, name="delReadNotification"),
     url(r'^delNotification$', views.delNotification, name="delNotification"),
 
-
     url(r'^watcher', watcher.watchCourses, name="watcher"),
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),
     url(r'^checkUsername', views.checkUsername, name="checkUsername"),
@@ -33,6 +32,10 @@ urlpatterns = [
     url(r'^wxpay', views.wxpay, name="wxpay"),
     url(r'^alipay', views.alipay, name="alipay"),
     url(r'^check_pay', views.check_pay, name="check_pay"),
+    url(r'^cancel_order', views.cancel_order, name="cancel_order"),
     url(r'^paycat_callback', views.paycat_callback, name="pay_callback"),
 
 ]
+
+handler404 = views.page_not_found
+handler500 = views.page_error

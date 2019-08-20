@@ -86,4 +86,5 @@ class Orders(models.Model):
     total_fee = models.FloatField('订单金额')  # 1.33 以元为单位
     addTime = models.DateTimeField('订单生成时间', auto_now_add=True)
     payTime = models.CharField('订单支付时间', max_length=1000)
+    closedTime = models.CharField('订单关闭时间', max_length=1000)
     status = models.IntegerField('状态', default=0)  # 0--等待 -1--失败 1---成功

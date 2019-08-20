@@ -57,6 +57,14 @@ def checkEmail(request):
         return HttpResponse(0)
 
 
+def page_not_found(request, exception):
+    return render(request, '404.html', status=404)
+
+
+def page_error(request):
+    return render(request, '500.html', status=500)
+
+
 def register(request):
     if request.method == 'GET':
         form = RegForm()
@@ -731,14 +739,14 @@ def Pay(request, method):
             if match is None:
                 raise Exception("金额不合法！")
             amount = int(float(total_fee) * 100)
-            self_order_num = pay.order_num(UserQ.UserProfile.telephone)
+            self_order_num = pay.order_num()
             body = '注入' + total_fee + '神秘点数'
             post_paras = {
                 'mch_id': mch_id,
                 'total_fee': amount,
                 'out_trade_no': self_order_num,
                 'body': body,
-                'user_id': UserQ.UserProfile.uid
+                'user_id': str(UserQ.UserProfile.uid)
             }
             sign = pay.get_sign(post_paras, secret_key)
             post_paras['sign'] = sign
@@ -771,8 +779,6 @@ def check_pay(request):
         order_num = request.POST.get('order_num')
         order = Orders.objects.get(trade_no=order_num)
         if order.status == 1:
-            CreateNotification(username=request.user.username, title="添加点数成功",
-                               content="你已经通过PY交易成功添加了" + str(order.total_fee) + "的点数！订单号：" + order.trade_no)
             order.status = 2  # 2--通知已到位
             order.save()
         return HttpResponse(int(order.status))
@@ -783,41 +789,71 @@ def cancel_order(request):
     if request.is_ajax:
         order_num = request.POST.get('order_num')
         order = Orders.objects.get(trade_no=order_num)  # 在知道订单号的情况下允许其他用户取消订单
-        if order.status == 0:
-            order.status = -1
-            order.save()
-        post_paras = {
-            'mch_id': mch_id,
-            'trade_no': order.platform_no,
-        }
-        sign = pay.get_sign(post_paras, secret_key)
-        post_paras['sign'] = sign
-        response = requests.post(url=cancel_url, data=post_paras, timeout=3)
-        response_dict = response.json()
-
-        return HttpResponse(int(order.status))
+        if order.status == 0:  # 只有等待中的订单才能取消
+            post_paras = {
+                'mch_id': mch_id,
+                'order_no': order.platform_no,
+            }
+            sign = pay.get_sign(post_paras, secret_key)
+            post_paras['sign'] = sign
+            response = requests.post(url=cancel_url, data=post_paras)
+            response_dict = response.json()
+            if response_dict['return_code'] == 0:  # 出错不return
+                order.status = -1
+                order.save()
+                CreateNotification(username=request.user.username, title="订单取消成功",
+                                   content="您订单号为" + order.platform_no + "的注入" + str(order.total_fee) + "点数的订单已经成功取消！")
+                return HttpResponse(int(order.status))
 
 
 @csrf_exempt
-def paycat_callback(request):
-    if request.method == 'POST':
-        data_dict = json.load(request.body)
-        sign = data_dict.pop('sign')
-        back_sign = pay.get_sign(data_dict, secret_key)
-        if sign == back_sign:
-            if request.POST.get('notify_type') == 'order.succeeded':
-                self_trade_no = data_dict['out_trade_no']
-                total_fee = data_dict['total_fee']
-                transaction_id = data_dict['transaction_id']
-                payTime = data_dict['pay_at']
-                order = Orders.objects.get(trade_no=self_trade_no)
-                if total_fee == order.total_fee * 100:
-                    order.payment_tool_no = transaction_id
-                    order.payTime = payTime
-                    order.status = 1
-                    order.save()
-                    return HttpResponse(1)
-                else:
-                    raise Exception('金额效验失败！')
-        else:
-            raise Exception('签名效验失败！')
+def paycat_callback(request):  # 暂时支持支付通知 关闭通知  需要验签 验重
+    try:
+        if request.method == 'POST':
+            data_dict = request.POST.dict()  # 商户号和金额为整数 注意转换否则签名错误
+            data_dict['mch_id'] = int(data_dict['mch_id'])
+            if data_dict['notify_type'] == 'order.succeeded':
+                data_dict['total_fee'] = int(data_dict['total_fee'])
+            sign = data_dict.pop('sign')
+            back_sign = pay.get_sign(data_dict, secret_key)
+            if sign == back_sign:
+                out_trade_no = data_dict['out_trade_no']
+                order = Orders.objects.get(trade_no=out_trade_no)
+                if data_dict['notify_type'] == 'order.succeeded':
+                    if order.status == 0:
+                        total_fee = data_dict['total_fee']
+                        transaction_id = data_dict['transaction_id']
+                        payTime = data_dict['pay_at']
+                        if total_fee == order.total_fee * 100:
+                            order.payment_tool_no = transaction_id
+                            order.payTime = payTime
+                            order.status = 1
+                            order.save()
+                            userprofile = order.user.UserProfile
+                            userprofile.points += order.total_fee
+                            userprofile.save()
+                            CreateNotification(username=order.user.username, title="点数注入成功",
+                                               content="您订单号为" + order.trade_no + "的注入" + str(
+                                                   order.total_fee) + "点数的订单已经完成支付！点数已经注入您的账户！")
+                            return HttpResponse(1)
+                        else:
+                            CreateNotification(username=order.user.username, title="点数注入失败",
+                                               content="您订单号为" + order.trade_no + "的注入" + str(
+                                                   order.total_fee) + "点数的订单没有通过金额效验。")
+                            raise Exception("金额效验失败！")
+                    else:
+                        raise Exception("支付成功回调提示：订单已经标记为完成！")
+                elif data_dict['notify_type'] == 'order.closed':
+                    if order.status == 0:
+                        closedTime = data_dict['closed_at']
+                        order.closedTime = closedTime
+                        order.status = -1
+                        order.save()
+                        return HttpResponse(1)
+                    else:
+                        raise Exception("关闭订单回调提示：订单已经标记为完成！")
+            else:
+                raise Exception('签名效验失败！')
+    except Exception as e:
+        logger.error(str(e))
+        return HttpResponse(status=200)
