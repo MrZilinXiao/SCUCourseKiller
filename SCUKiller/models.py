@@ -51,6 +51,7 @@ class courses(models.Model):
     addTime = models.DateTimeField('添加时间', auto_now_add=True)
     attempts = models.IntegerField(verbose_name="尝试次数", default=0)
     isSuccess = models.IntegerField(verbose_name='是否成功', default=0)  # -1 异常 0 未成功 1 已成功
+    gid = models.CharField(verbose_name="组编号", default='', max_length=100)
 
     class Meta:
         verbose_name = "课程信息"

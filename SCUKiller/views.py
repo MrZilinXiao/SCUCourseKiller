@@ -221,12 +221,13 @@ def addCourse(request):
                     ctype = "方案选课"
                 else:
                     ctype = "其他选课"
-                find_same = courses.objects.filter(kch=kch, kxh=kxh)
-                if find_same:
-                    for item in find_same:
-                        if item.status != '已完成':
-                            Courses = UserQ.UserProfile.coursesHost.all()
-                            raise Exception("系统中有相同的课程未完成！")
+                if kch != '' and kxh != '' and keyword == '':
+                    find_same = courses.objects.filter(kch=kch, kxh=kxh)
+                    if find_same:
+                        for item in find_same:
+                            if item.status != '已完成':
+                                Courses = UserQ.UserProfile.coursesHost.all()  # 报错还是要列出课程
+                                raise Exception("系统中有相同的课程未完成！")
                 host = UserQ.UserProfile
                 # DONE: 加入课程时验证课程是否存在
                 # DOING:如果课程号与课序号都给出则关闭关键词模式
@@ -316,7 +317,7 @@ def addCourse(request):
                             rows[j - 1]['keyword'] = keyword
                         request.session["courseList"] = rows
                         raise Exception("请在右侧的课程列表中选择需要监控的课程并提交！")
-                # 下面是给定课程号 课序号的业务逻辑
+                # 下面是给定课程号 课序号的业务逻辑 其他业务逻辑全部放到except中作为异常
                 UserQ.UserProfile.courseRemainingCnt -= 1
                 UserQ.UserProfile.courseCnt += 1
                 UserQ.UserProfile.save()
@@ -405,7 +406,7 @@ def checkCookie(request):
             errormsg = e  # 恶意请求 或 Cookie Invaild Session
         if str(errormsg) == "Cookie已经失效！已经更新为最新的Cookie！" or str(
                 errormsg) == "HTTP Error 500: Internal Server Error" or str(
-                errormsg) == "HTTP Error 302: Moved Temporarily":
+            errormsg) == "HTTP Error 302: Moved Temporarily":
             try:
                 jwcaccount.jwcCookie = str(
                     jwcVal.valjwcAccount(jwcaccount.jwcNumber, jwcaccount.jwcPasswd,
@@ -427,15 +428,19 @@ def courseManagement(request):
         notice = ''
         if cidDel is not None:
             CourseQ = courses.objects.get(cid=cidDel)
-            notice = "课程《" + CourseQ.kcm + "》已被成功删除"
-            CourseQ.delete()
+            if CourseQ.gid != '':  # 按分组添加的课程
+                delCourses = courses.objects.filter(gid=CourseQ.gid)
+                delCourses.delete()
+                notice = "课程《" + CourseQ.kcm + "》已被成功删除，与其一起添加的课程也被成功删除。"
+            else:
+                CourseQ.delete()
+                notice = "课程《" + CourseQ.kcm + "》已被成功删除"
             CreateNotification(username=request.user.username, title="课程删除成功",
-                               content="课程《" + CourseQ.kcm + "》已被成功删除")
+                               content=notice)
             Courses = UserQ.UserProfile.coursesHost.all()
             UserQ.UserProfile.courseCnt = len(Courses)
             UserQ.UserProfile.save()
             return render(request, 'courseManagement.html', locals())
-
         Courses = UserQ.UserProfile.coursesHost.all()
         return render(request, 'courseManagement.html', locals())
     else:
@@ -572,8 +577,9 @@ def getCourseList(request):
         idList = []
         for id in ids.split(","):
             idList.append(int(id))
+        gid = pay.random_str(10)
         for id in idList:
-            if request.session["courseList"][id - 1].has_key('keyword'):
+            if 'keyword' in request.session["courseList"][id - 1]:
                 keyword = request.session["courseList"][id - 1]['keyword']
             else:
                 keyword = ''
@@ -607,7 +613,7 @@ def getCourseList(request):
             for i, c in enumerate(courseList):
                 location += (str(i + 1) + "：" + c['jxlm'] + " " + c['jasm'] + "\n")
             course = courses(kch=kch, kxh=kxh, kcm=kcm, host=host, type=type, term=term,
-                             teacher=teacher, campus=campus, location=location, keyword=keyword)
+                             teacher=teacher, campus=campus, location=location, keyword=keyword, gid=gid)
             course.save()
             CreateNotification(username=request.user.username, title="批量课程添加成功",
                                content="您已经成功通过多选课程的方式，添加课程号为" + str(kch) + "，课序号为" + str(kxh) + "的课程《" + kcm + "》！")
@@ -632,6 +638,8 @@ def topup(request):
             code = request.POST.get('code')
             try:
                 founded = codes.objects.get(code=code)
+                if founded.usedBy != '':
+                    raise Exception("神秘代码已被使用！")
             except Exception:
                 raise Exception("没有找到这串神秘代码！")
 

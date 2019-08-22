@@ -90,7 +90,7 @@
                         {% if errormsg2 %}
                             <span style='color:red;'>{{ errormsg2 }}</span>
                         {% endif %}
-                        <span class="help-block m-b-none">您当前可供兑换的点数为{{{ points|floatformat:2 }}， 当前每门课程消耗{{ points_per_course }}点数， 您最多可兑换{{ availCourses }}个剩余课程量。</span>
+                        <span class="help-block m-b-none">您当前可供兑换的点数为{{ points|floatformat:2 }}， 当前每门课程消耗{{ points_per_course }}点数， 您最多可兑换{{ availCourses }}个剩余课程量。</span>
                         <div class="form-group">
                             <label class="col-sm-3 control-label">兑换课程数：</label>
 

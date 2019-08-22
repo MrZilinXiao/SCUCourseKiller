@@ -82,7 +82,8 @@
                                     <td>{% if course.kcm != '' %}授课教师：{{ course.teacher }}<br/>校区：{{ course.campus }}
                                         <br/>上课地点：{{ course.location }}{% else %}无{% endif %}</td>
                                     <td><a href="{% url 'courseManagement' %}?del={{ course.cid }}">
-                                        <button id="delCourse" type="button" class="btn btn-w-m btn-danger" onclick="setDisabled('delCourse')">删除课程</button>
+                                        <button id="delCourse" type="button" class="btn btn-w-m btn-danger">删除课程{% if course.gid != '' %}(同一批次添加的课程也会被删除){% endif %}
+                                        </button>
                                     </a></td>
                                     <td><i class="fa fa-check text-navy"></i>{{ course.status }}</td>
                                 </tr>
@@ -165,7 +166,8 @@
                         </div>
                         <div class="form-group">
                             <div class="col-sm-offset-3 col-sm-8">
-                                <button id="submit_course" class="btn btn-primary pull-right" type="submit" onclick=""><i class="fa fa-check"></i>&nbsp;提交
+                                <button id="submit_course" class="btn btn-primary pull-right" type="submit" onclick="">
+                                    <i class="fa fa-check"></i>&nbsp;提交
                                 </button>
                             </div>
                         </div>
@@ -188,7 +190,7 @@
             <div class="ibox float-e-margins">
 
                 <div id="toolbar" class="btn-group">
-                    <button id="btn-submit" type="button" class="btn btn-w-m btn-success" onclick="setDisabled('btn-submit')">
+                    <button id="btn-submit" type="button" class="btn btn-w-m btn-success" onclick="">
                         <span aria-hidden="true" class="icon icon-plus-sign"></span><i class="fa fa-check"></i>提交选中课程
                     </button>
                 </div>
@@ -344,65 +346,64 @@
         })
     }
 
-        function refresh() {
-            /**
-             * 刷新表格数据
-             */
-            $table.bootstrapTable('refresh');
-            //$table.bootstrapTable('refresh'.{url:""});//刷新时调用接口防止表格无限销毁重铸时出现英文
+    function refresh() {
+        /**
+         * 刷新表格数据
+         */
+        $table.bootstrapTable('refresh');
+        //$table.bootstrapTable('refresh'.{url:""});//刷新时调用接口防止表格无限销毁重铸时出现英文
+    }
+
+    //事件部分
+    $("#btn-query").on("click", function () {
+        /** * 查询 */
+        refresh();
+    });
+
+    $("#btn-submit").on("click", function () {
+        /**
+         * 提交选中的课程
+         */
+        var selRows = $table.bootstrapTable("getSelections");
+        if (selRows.length === 0) {
+            swal({
+                title: "注意",
+                text: "你没有选择任意一门课程哦！",
+                type: "error"
+            });
+            return;
         }
 
-        //事件部分
-        $("#btn-query").on("click", function () {
-            /** * 查询 */
-            refresh();
-        });
-
-        $("#btn-submit").on("click", function () {
-            /**
-             * 提交选中的课程
-             */
-            var selRows = $table.bootstrapTable("getSelections");
-            if (selRows.length === 0) {
-                swal({
-                    title: "注意",
-                    text: "你没有选择任意一门课程哦！",
-                    type: "error"
-                });
-                return;
+        var postData = "ids=";
+        $.each(selRows, function (i) {
+            postData += this.id;
+            if (i < selRows.length - 1) {
+                postData += ",";
+            } else {
+                postData += "&csrfmiddlewaretoken=" + $('[name="csrfmiddlewaretoken"]').val();
             }
+        });
 
-            var postData = "ids=";
-            $.each(selRows, function (i) {
-                postData += this.id;
-                if (i < selRows.length - 1) {
-                    postData += ",";
-                }
-                else {
-                    postData += "&csrfmiddlewaretoken=" + $('[name="csrfmiddlewaretoken"]').val();
-                }
-            });
-
-            $.post("{% url 'getCourseList' %}", postData, function (data) {
-                swal({
-                    title: "请求已提交",
-                    text: "你所选的课程已经提交到选课系统，稍后可在通知中心与课程管理中查看选课情况。",
-                    type: "success",
-                    showCancelButton: false,
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "我知道了",
-                    closeOnConfirm: true
-                }, function () {
-                    location.replace('{% url 'courseManagement' %}');
-                    $table.bootstrapTable("refresh");
-                });
+        $.post("{% url 'getCourseList' %}", postData, function (data) {
+            swal({
+                title: "请求已提交",
+                text: "你所选的课程已经提交到选课系统，稍后可在通知中心与课程管理中查看选课情况。",
+                type: "success",
+                showCancelButton: false,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "我知道了",
+                closeOnConfirm: true
+            }, function () {
+                location.replace('{% url 'courseManagement' %}');
+                $table.bootstrapTable("refresh");
             });
         });
+    });
 </script>
 <script>
-    $(function() {
-        $(".btn").click(function(){
-            $(this).button('loading').delay(1000).queue(function() {
+    $(function () {
+        $(".btn").click(function () {
+            $(this).button('loading').delay(1000).queue(function () {
             });
         });
     });
