@@ -110,7 +110,7 @@ def watchCourses(request):
                                        "在一次监测中发现您的Cookie已经失效，已经成功为您更新Cookie，请确保在未选中心仪的课程之前不要登录教务处网站！")
                     continue  # 更新Cookie后此轮不watch 等下一轮
                 except Exception as e:
-                    print(e, jwc.jwcNumber)
+                    logger.error(str(e) + str(jwc.jwcNumber))
                     invalidCourses = course.objects.filter(host=course.host)
                     for item in invalidCourses:
                         item.isSuccess = -1  # 教务处密码错误 此用户所有课程设为异常
@@ -121,20 +121,20 @@ def watchCourses(request):
                     continue
 
         (opener, cookie) = jwcVal.InitOpener(course.host.user.username, jwc.jwcCookie)
-        # try:  # 在函数内部判断是关键词模式还是指定课程模式
-        availCourse = specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
-                                    course.term)  # 返回一个可选课程列表
-        course.attempts += 1
-        course.save()
-        # except Exception as e:
-        #     logger.error(e)
-        #     if str(e) == '找不到提供的课程信息所对应的课程！':
-        #         course.status = '出错'
-        #         course.isSuccess = -1
-        #         course.save()
-        #         CreateNotification(course.host.user.username, "课程信息出错提示",
-        #                            "您提供的课程信息《" + course.kcm + "》由于找不到对应课程，课程已被列入出错课程停止监测。")
-        #         continue
+        try:  # 在函数内部判断是关键词模式还是指定课程模式
+            availCourse = specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
+                                        course.term)  # 返回一个可选课程列表
+            course.attempts += 1
+            course.save()
+        except Exception as e:
+            logger.error(e)
+            if str(e) == '找不到提供的课程信息所对应的课程！':
+                course.status = '出错'
+                course.isSuccess = -1
+                course.save()
+                CreateNotification(course.host.user.username, "课程信息出错提示",
+                                   "您提供的课程信息《" + course.kcm + "》由于找不到对应课程，课程已被列入出错课程停止监测。")
+                continue
         if availCourse:  # 列表不为空
             for avail in availCourse:
                 _avail = [avail]
