@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+
 import SCUKiller.utils as utils
 from .config import *
 from .models import UserProfile, User, notification as noti, courses
@@ -81,20 +83,24 @@ def postCourse(opener, availCourse):
     return success  # 循环完成也返回
 
 
-def watchCourses():
+def watchCourses(request):
     coursesPending = courses.objects.filter(~Q(isSuccess=1))
     for course in coursesPending:
+        availCourse = []
+        success = ''
         if course.status == '等待中':
             course.status = '运行中'
             course.save()
         if course.isSuccess == -1:  # 跳过异常课程
             continue
-        jwc = course.host.jwcHost
+        jwc = course.host.jwcaccount
         try:  # 检查Cookie或账号是否失效
             jwcVal.valCookie(jwc.jwcCookie, course.host.user.username)
         except Exception as e:
             print(e, jwc.jwcNumber)
-            if str(e) == 'Cookie已经失效！已经更新为最新的Cookie！':
+            if str(e) == 'Cookie已经失效！已经更新为最新的Cookie！' or str(
+                    e) == "HTTP Error 500: Internal Server Error" or str(
+                e) == "HTTP Error 302: Moved Temporarily":
                 try:
                     jwc.jwcCookie = str(jwcVal.valjwcAccount(jwc.jwcNumber, jwc.jwcPasswd, course.host.user.username))
                     jwc.save()
@@ -111,6 +117,7 @@ def watchCourses():
                     CreateNotification(course.host.user.username, "教务处账号失效提示",
                                        "在一次监测中发现无法登录您的教务处账号，请前去删除您的所有课程并重新绑定教务处账号！")
                     continue
+
         (opener, cookie) = jwcVal.InitOpener(course.host.user.username, jwc.jwcCookie)
         try:  # 在函数内部判断是关键词模式还是指定课程模式
             availCourse = specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
@@ -143,3 +150,5 @@ def watchCourses():
                                "系统在选择您的课程《" + course.kcm + "》时，发生了课程冲突。在课表空余不足时，请尽量使用指定课程模式而非关键字模式。")
         elif success == 'No Available Courses':  # 运气不好，没抢过其他人
             pass
+
+    return HttpResponse(1)

@@ -3,9 +3,13 @@ from urllib import error
 from urllib import parse
 from urllib import request
 import requests
+import socket
 from .config import *
 from retrying import retry
 from .models import User
+
+timeout = 1
+socket.setdefaulttimeout(timeout)
 
 
 @retry(stop_max_attempt_number=3)
@@ -30,7 +34,7 @@ def checkProxy(proxy_text):
     try:
         if proxy_text:
             proxy = {'http': proxy_text}
-            requests.get('http://wenshu.court.gov.cn/', proxies=proxy)
+            requests.get('http://wenshu.court.gov.cn/', proxies=proxy, timeout=1)
             return True
         else:
             return False
@@ -64,7 +68,7 @@ def valCookie(cookieStr, username=''):
             raise Exception("Cookie已经失效！已经更新为最新的Cookie！")
         return True
     except error.HTTPError as e:
-        print(e)
+        print(e)  # HTTP 500 302 是未知类型的错误
         raise e
     except Exception as e:
         print(e)
