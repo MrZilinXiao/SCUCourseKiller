@@ -1,6 +1,5 @@
 # coding=utf-8
 
-import logging
 import time
 import re
 import json
@@ -25,7 +24,7 @@ from .models import jwcAccount as jwcModel
 from .storeBack import generate_code, utc2local
 from .config import *
 
-logger = logging.getLogger(__name__)
+logger = jwcVal.logger
 
 
 # Create your views here.

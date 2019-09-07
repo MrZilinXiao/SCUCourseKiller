@@ -4,12 +4,16 @@ from urllib import parse
 from urllib import request
 import requests
 import socket
+import logging
 from .config import *
 from retrying import retry
 from .models import User
 
-timeout = 1
-socket.setdefaulttimeout(timeout)
+logger = logging.getLogger(__name__)
+
+
+# timeout = 3
+# socket.setdefaulttimeout(timeout)
 
 
 @retry(stop_max_attempt_number=3)
@@ -26,7 +30,7 @@ def getProxy(username):
             UserQ.UserProfile.jwcaccount.save()
         return Proxy
     except:
-        print("Getting Proxy from pool Error...")
+        logger.error("Getting Proxy from pool Error...")
 
 
 @retry(stop_max_attempt_number=3)
@@ -39,13 +43,18 @@ def checkProxy(proxy_text):
         else:
             return False
     except:
-        print("Connection Failed while using proxy:" + proxy_text)
+        logger.error("Connection Failed while using proxy:" + proxy_text)
 
 
 def InitOpener(username='', cookie=None):
     if cookie is None:
-        cookie = http.cookiejar.CookieJar()
-    cookie_support = request.HTTPCookieProcessor(cookie)
+        cookieJar = http.cookiejar.CookieJar()
+    elif isinstance(cookie, str):
+        cookie_dict = eval(cookie)
+        cookieJar = requests.utils.cookiejar_from_dict(cookie_dict)
+    else:
+        cookieJar = cookie
+    cookie_support = request.HTTPCookieProcessor(cookieJar)
     # For Proxy
     if username == '':
         proxy = {}
@@ -54,7 +63,7 @@ def InitOpener(username='', cookie=None):
     proxy_handler = request.ProxyHandler(proxy)
     # Get Latest Proxy every time?
     opener = request.build_opener(cookie_support, proxy_handler)
-    return opener, cookie
+    return opener, cookieJar
 
 
 def valCookie(cookieStr, username=''):
@@ -68,11 +77,11 @@ def valCookie(cookieStr, username=''):
             raise Exception("Cookie已经失效！已经更新为最新的Cookie！")
         return True
     except error.HTTPError as e:
-        print(e)  # HTTP 500 302 是未知类型的错误
+        logger.error(e)  # HTTP 500 302 是未知类型的错误
         raise e
     except Exception as e:
-        print(e)
-        raise Exception(e)
+        logger.error(e)
+        raise e
 
 
 def valjwcAccount(stuID, stuPass, username=''):  # 可以更新Cookie
@@ -91,7 +100,7 @@ def valjwcAccount(stuID, stuPass, username=''):  # 可以更新Cookie
         cookie_dict = requests.utils.dict_from_cookiejar(cookie)
         return cookie_dict
     except error.HTTPError as e:
-        print(e)
+        logger.error(e)
         if e.filename == 'http://zhjw.scu.edu.cn/login?errorCode=badCredentials':
             raise Exception("密码错误！请删除教务处账号后重新添加！在监控期间请不要修改教务处密码！")
         else:
