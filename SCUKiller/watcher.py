@@ -1,3 +1,5 @@
+import datetime
+
 from django.http import HttpResponse
 
 import SCUKiller.utils as utils
@@ -86,6 +88,12 @@ def postCourse(opener, availCourse):
 
 
 def watchCourses(request):
+    d_time = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '9:31', '%Y-%m-%d%H:%M')
+    d_time1 = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '21:59', '%Y-%m-%d%H:%M')
+    n_time = datetime.datetime.now()
+
+    if not d_time < n_time < d_time1:
+        return HttpResponse("Not in Choosing Time Period! Now: " + str(n_time))
     attempts = 0
     success_cnt = 0
     coursesPending = courses.objects.filter(~Q(isSuccess=1))

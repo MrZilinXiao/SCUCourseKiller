@@ -9,6 +9,7 @@ nginx
 
 chmod +x crontab.sh
 crontab crontab.settings
+crond start
 
 #application settings
 export DJANGO_SETTINGS_MODULE=SCUCourseKiller.settings

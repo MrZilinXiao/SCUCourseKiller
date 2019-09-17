@@ -421,6 +421,7 @@ def checkCookie(request):
 def courseManagement(request):
     if request.user.is_authenticated:
         UserQ = User.objects.get(username=request.user.username)
+        UserP = UserQ.UserProfile
         form = AddCourseForm()
         cidDel = request.GET.get("del")
         notice = ''
@@ -433,6 +434,9 @@ def courseManagement(request):
             else:
                 CourseQ.delete()
                 notice = "课程《" + CourseQ.kcm + "》已被成功删除"
+            if CourseQ.status != 1:
+                UserP.courseRemainingCnt += 1
+                UserP.save()
             CreateNotification(username=request.user.username, title="课程删除成功",
                                content=notice)
             Courses = UserQ.UserProfile.coursesHost.all()
@@ -492,12 +496,10 @@ def alterUserinfo(request):
                 user.save()
                 res['status'] = 200
                 res['msg'] = '密码修改成功'
-
-            else:
-                res['msg'] = '两次密码输入不一致'
                 CreateNotification(username=request.user.username, title="密码修改成功",
                                    content="您已经成功修改密码！")
-
+            else:
+                res['msg'] = '两次密码输入不一致'
         else:
             res['msg'] = '原密码错误'
         return JsonResponse(res)
