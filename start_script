@@ -7,6 +7,8 @@ sed -i '/user/{s/nginx/root/}' /etc/nginx/nginx.conf
 ln -s /root/SCUCourseKiller/mysite_nginx.conf /etc/nginx/conf.d/
 nginx
 
+chmod +x crontab.sh
+crontab crontab.settings
 
 #application settings
 export DJANGO_SETTINGS_MODULE=SCUCourseKiller.settings

@@ -149,8 +149,13 @@ def watchCourses(request):
             course.status = '已完成'
             course.isSuccess = 1
             course.save()
-            CreateNotification(course.host.user.username, "课程选择成功",
-                               "系统已经成功选中了您的课程《" + course.kcm + "》，请登录教务处网站核实。")
+            if course.gid != '':
+                courses.objects.filter(gid=course.gid).update(status='已完成', isSuccess=1)
+                CreateNotification(course.host.user.username, "课程选择成功",
+                                   "系统已经成功选中了您的课程《" + course.kcm + "》，请登录教务处网站核实。由于您是批量添加的课程，当其中一门课程完成后，其他课程将也标记为已完成状态。")
+            else:
+                CreateNotification(course.host.user.username, "课程选择成功",
+                                   "系统已经成功选中了您的课程《" + course.kcm + "》，请登录教务处网站核实。")
         elif success == 'Conflict':
             course.status = '课程冲突'
             course.isSuccess = -1
