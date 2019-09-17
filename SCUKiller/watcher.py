@@ -152,6 +152,9 @@ def watchCourses(request):
             CreateNotification(course.host.user.username, "课程选择成功",
                                "系统已经成功选中了您的课程《" + course.kcm + "》，请登录教务处网站核实。")
         elif success == 'Conflict':
+            course.status = '课程冲突'
+            course.isSuccess = -1
+            course.save()
             CreateNotification(course.host.user.username, "课程冲突提示",
                                "系统在选择您的课程《" + course.kcm + "》时，发生了课程冲突。在课表空余不足时，请尽量使用指定课程模式而非关键字模式。")
         elif success == 'No Available Courses':  # 运气不好，没抢过其他人
