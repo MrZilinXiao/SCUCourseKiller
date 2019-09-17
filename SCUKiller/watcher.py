@@ -26,7 +26,7 @@ def specificWatch(opener, keyword, kch, kxh, type, term):
         if keyword == '':
             post_params = {'kch': kch, 'xq': '0', 'jc': '0', 'kclbdm': '', 'jhxn': term}
         else:
-            post_params = {'kch': keyword, 'xq': '0', 'jc': '0', 'kclbdm': '', 'jhxn': term}  # TODO:验证POST数据是否正确构造
+            post_params = {'kch': keyword, 'xq': '0', 'jc': '0', 'kclbdm': '', 'jhxn': term}
         watch_data_parsed = parse.urlencode(post_params).encode('utf-8')
         Request = request.Request(planCourse_url, watch_data_parsed, headers=headers)
     Response = opener.open(Request)
@@ -67,7 +67,7 @@ def postCourse(opener, availCourse):
         selectData = utils.getSelectData(token,
                                          availCourse)  # TODO: postToken和postSelect 后者带了inputCode和tokenValue 这里进行改动 看看只post一遍是否可行
 
-        # utils.postToken(token, availCourse, opener)  # 验证码不能为空在这里出现，提交了选课信息
+        utils.postToken(token, availCourse, opener)  # 验证码不能为空在这里出现，提交了选课信息
         try:
             selectResponse = utils.postSelect(selectData, opener)  # Post选课 selectResponse回复 没带token inputCode
         except error.HTTPError as e:
@@ -86,6 +86,8 @@ def postCourse(opener, availCourse):
 
 
 def watchCourses(request):
+    attempts = 0
+    success_cnt = 0
     coursesPending = courses.objects.filter(~Q(isSuccess=1))
     for course in coursesPending:
         availCourse = []
@@ -120,11 +122,12 @@ def watchCourses(request):
                                        "在一次监测中发现无法登录您的教务处账号，请前去删除您的所有课程并重新绑定教务处账号！")
                     continue
 
-        (opener, cookie) = jwcVal.InitOpener(course.host.user.username, jwc.jwcCookie)
+        (opener, cookie) = jwcVal.InitOpener('', jwc.jwcCookie)  # 先不使用代理
         try:  # 在函数内部判断是关键词模式还是指定课程模式
             availCourse = specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
                                         course.term)  # 返回一个可选课程列表
             course.attempts += 1
+            attempts += 1
             course.save()
         except Exception as e:
             logger.error(e)
@@ -140,6 +143,7 @@ def watchCourses(request):
                 _avail = [avail]
                 success = postCourse(opener, _avail)  # 一个一个POST避免冲突，一个成功就break
                 if success == 'success':
+                    success_cnt += 1
                     break
         if success == 'success':
             course.status = '已完成'
@@ -153,4 +157,4 @@ def watchCourses(request):
         elif success == 'No Available Courses':  # 运气不好，没抢过其他人
             pass
 
-    return HttpResponse(1)
+    return HttpResponse("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))

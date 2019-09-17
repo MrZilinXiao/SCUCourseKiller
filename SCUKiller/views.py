@@ -26,7 +26,6 @@ from .config import *
 
 logger = jwcVal.logger
 
-
 # Create your views here.
 def check_captcha(request):
     import io

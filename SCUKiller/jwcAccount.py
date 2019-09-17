@@ -69,7 +69,7 @@ def InitOpener(username='', cookie=None):
 def valCookie(cookieStr, username=''):
     cookie_dict = eval(cookieStr)
     cookieJar = requests.utils.cookiejar_from_dict(cookie_dict)
-    (opener, _) = InitOpener(username, cookieJar)
+    (opener, _) = InitOpener('', cookieJar)  # 先不使用代理
     testreq = request.Request(token_url, headers=headers)
     try:
         testVal = opener.open(testreq)
@@ -90,7 +90,7 @@ def valjwcAccount(stuID, stuPass, username=''):  # 可以更新Cookie
         'j_password': stuPass,
         'j_captcha': 'error',
     }
-    [opener, cookie] = InitOpener(username=username)
+    [opener, cookie] = InitOpener('')  # 先不用代理
     # Login
     opener.open(request.Request(login_page_url, headers=headers))  # Get cookie
     login_data_parsed = parse.urlencode(login_data).encode("utf-8")
