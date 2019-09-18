@@ -1,8 +1,33 @@
+from django.contrib.auth.models import User
+
+from SCUKiller.send_email import send_html_email
+from SCUKiller.jwcAccount import logger
 from .config import *
+from .models import notification as noti
 from urllib import parse
 from urllib import request
 import json
 import re
+
+
+def CreateNotification(username, title, content):
+    UserQ = get(username=username)
+    notifi = noti(host=UserQ, title=title, content=content)
+    notifi.save()
+    EmailAddress = UserQ.email
+    send_mail([EmailAddress], title, content)
+    print("[%s][%s]%s" % (username, title, content))
+    logger.info("[%s][%s]%s" % (username, title, content))
+
+
+def send_mail(receive_email_addr, title, text):
+    """
+        发送邮件
+        parameter:
+            receive_email_addr: 邮箱地址list    ['***@163.com','***@qq.com',...]
+    """
+    logger.info('************邮件已经加入发送队列*******************')
+    send_html_email("[SCUCourseKiller]" + title, text, receive_email_addr)
 
 
 def getToken(opener):

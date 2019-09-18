@@ -1,10 +1,13 @@
 # coding=utf-8
-
+import os
+import queue
+import threading
 import time
 import re
 import json
 
 import requests
+from django.views import View
 
 import SCUKiller.pay as pay
 
@@ -19,12 +22,26 @@ from django.views.decorators.csrf import csrf_exempt
 from . import jwcAccount as jwcVal
 from .forms import RegForm, LoginForm, AddCourseForm, AddjwcAccount
 from .jwcCourse import courseid2courses
-from .models import UserProfile, User, notification as noti, courses, codes, Orders
+from .models import UserProfile, User, notification as noti, courses, codes, Orders, EmailVerifyRecord
 from .models import jwcAccount as jwcModel
 from .storeBack import generate_code, utc2local
 from .config import *
+from .watcher import watchCourses
+from .utils import CreateNotification
 
 logger = jwcVal.logger
+
+
+def watchLoop():
+    while True:
+        t = threading.Thread(target=watchCourses)
+        t.start()
+        time.sleep(watch_interval)
+
+
+watch_Loop = threading.Thread(target=watchLoop)
+watch_Loop.start()
+
 
 # Create your views here.
 def check_captcha(request):
@@ -90,6 +107,7 @@ def register(request):
                         userProfile.save()
                         user.backend = 'django.contrib.auth.backends.ModelBackend'
                         login(request, user)
+
                         CreateNotification(username, "恭喜您！", "您已经成功注册SCUCourseKiller！")
                         return redirect('index')
                 elif captcha != request.session['CheckCode'].lower():
@@ -99,6 +117,24 @@ def register(request):
                 return render(request, 'register.html', {'form': form})
         else:
             return redirect('index')
+
+
+class ActiveUserView(View):
+    """
+    验证注册码，并激活用户
+    """
+
+    def get(self, request, active_code):
+        all_records = EmailVerifyRecord.objects.filter(code=active_code)
+        if all_records:
+            for record in all_records:
+                email = record.email
+                user = UserProfile.objects.get(email=email)
+                user.is_active = True
+                user.save()
+        else:
+            return render(request, '500.html', status=500)
+        return render(request, 'login.html', {'errormsg': '激活成功！请重新登录'})
 
 
 def logIn(request):
@@ -119,9 +155,13 @@ def logIn(request):
             if username != '' and password != '' and captcha == request.session['CheckCode'].lower():
                 user = authenticate(username=username, password=password)
                 if user is not None:
-                    login(request, user)
-                    logger.info("登录成功！")
-                    return redirect(request.session['login_from'])
+                    UserQ = get(username=username)
+                    if UserQ.UserProfile.is_active:
+                        login(request, user)  # 调用login方法登陆账号
+                        logger.info("登录成功！")
+                        return redirect(request.session['login_from'])
+                    else:
+                        errormsg = "用户未激活！"
                 elif captcha != request.session['CheckCode'].lower():
                     errormsg = "验证码错误"
                 else:
@@ -147,7 +187,7 @@ def notification(request):
     if request.user.is_authenticated:
         user = request.user
         username = user.username
-        UserQ = User.objects.get(username=username)
+        UserQ = get(username=username)
         notifications = noti.objects.filter(host=user)
         notificationsCnt = len(notifications)
         if request.method == 'GET':
@@ -164,7 +204,7 @@ def index(request):
     if request.user.is_authenticated:
         user = request.user
         username = user.username
-        UserQ = User.objects.get(username=username)
+        UserQ = get(username=username)
         notificationsCnt = len(UserQ.notificationHost.filter(isRead=False))
         isNotified = False
         if notificationsCnt != 0:
@@ -180,7 +220,7 @@ def inner_index(request):
     if request.user.is_authenticated:
         # user = request.user
         # username = user.username
-        UserQ = User.objects.get(username=request.user.username)
+        UserQ = get(username=request.user.username)
         points = UserQ.UserProfile.points
         courseCnt = UserQ.UserProfile.courseCnt
         courseRemainingCnt = UserQ.UserProfile.courseRemainingCnt
@@ -195,7 +235,7 @@ def addCourse(request):
     if request.method == 'POST':
         try:
             form = AddCourseForm(request.POST)
-            UserQ = User.objects.get(username=request.user.username)
+            UserQ = get(username=request.user.username)
             userprofile = UserQ.UserProfile
             if userprofile.courseRemainingCnt <= 0:
                 raise Exception('剩余课程权限不足！')
@@ -207,7 +247,7 @@ def addCourse(request):
             if jwcaccount is None:
                 raise Exception('您尚未绑定教务处账号！')
             if form.is_valid():
-                UserQ = User.objects.get(username=request.user.username)
+                UserQ = get(username=request.user.username)
                 keyword = form.cleaned_data['keyword']
                 kch = form.cleaned_data['kch']
                 kxh = form.cleaned_data['kxh']
@@ -228,8 +268,8 @@ def addCourse(request):
                                 raise Exception("系统中有相同的课程未完成！")
                 host = UserQ.UserProfile
                 # DONE: 加入课程时验证课程是否存在
-                # DOING:如果课程号与课序号都给出则关闭关键词模式
-                # DOING: 在前端可视化返回符合要求的课程列表
+                # DONE:如果课程号与课序号都给出则关闭关键词模式
+                # DONE: 在前端可视化返回符合要求的课程列表
 
                 # 监控方式归纳
                 # 1、纯关键词抢课，不能指定课程号与课序号。（例如抢中华文化）（已实现）
@@ -338,7 +378,7 @@ def addCourse(request):
 def jwcAccount(request):
     if request.user.is_authenticated:
         if request.method == 'GET':
-            UserQ = User.objects.get(username=request.user.username)
+            UserQ = get(username=request.user.username)
             # get返回单对象 反向查询需要try 当找不到或找到多个时报错
             # filter返回QuerySet，直接if判断是否为空
             userprofile = UserQ.UserProfile
@@ -365,12 +405,12 @@ def jwcAccount(request):
                         raise Exception("学号已存在！")
                     try:
                         cookie_dict = jwcVal.valjwcAccount(stuID, stuPass)  # 没有添加教务处账户之前先不用代理
-                        user = User.objects.get(username=request.user.username)
+                        user = get(username=request.user.username)
                         jwc = jwcModel(jwcNumber=stuID, jwcPasswd=stuPass, userprofile=user.UserProfile,
                                        jwcCookie=str(cookie_dict))
                         jwc.save()  # TODO: verify if this is working
                         CreateNotification(username=request.user.username, title="教务处账号绑定成功",
-                                           content="您已经成功绑定学号为" + str(stuID) + "的教务处账号！")
+                                           content="您已经成功绑定学号为" + str(stuID) + "的教务处账号！（每个学号只能享受一个体验课程量！）")
                         return redirect('jwcAccount')
                     except Exception as e:
                         errormsg = "学号或密码错误！"
@@ -420,7 +460,7 @@ def checkCookie(request):
 @login_required
 def courseManagement(request):
     if request.user.is_authenticated:
-        UserQ = User.objects.get(username=request.user.username)
+        UserQ = get(username=request.user.username)
         UserP = UserQ.UserProfile
         form = AddCourseForm()
         cidDel = request.GET.get("del")
@@ -459,7 +499,7 @@ def deljwcAccount(request):
                     raise Exception("删除的学号不存在！")
                 if request.user.username != jwcaccount.userprofile.user.username:
                     raise Exception("你欲删除的学号不属于你！")
-                UserQ = User.objects.get(username=request.user.username)
+                UserQ = get(username=request.user.username)
                 remainingCourses = courses.objects.filter(host=UserQ.UserProfile)
                 remainingCourses = remainingCourses.filter(~Q(isSuccess=1))
                 if remainingCourses:
@@ -503,14 +543,6 @@ def alterUserinfo(request):
         else:
             res['msg'] = '原密码错误'
         return JsonResponse(res)
-
-
-def CreateNotification(username, title, content):
-    UserQ = User.objects.get(username=username)
-    notifi = noti(host=UserQ, title=title, content=content)
-    notifi.save()
-    print("[%s][%s]%s" % (username, title, content))
-    logger.info("[%s][%s]%s" % (username, title, content))
 
 
 @login_required
@@ -571,7 +603,7 @@ def getCourseList(request):
             raise e
 
     if request.method == 'POST':
-        UserQ = User.objects.get(username=request.user.username)
+        UserQ = get(username=request.user.username)
         host = UserQ.UserProfile
         ids = request.POST.get('ids')
         idList = []
@@ -629,7 +661,7 @@ def getCourseList(request):
 def topup(request):
     if request.method == 'GET':
         points_per_course = 10.0
-        UserQ = User.objects.get(username=request.user.username)
+        UserQ = get(username=request.user.username)
         points = UserQ.UserProfile.points
         availCourses = int(points / points_per_course)
         return render(request, 'store.html', locals())
@@ -643,7 +675,7 @@ def topup(request):
             except Exception:
                 raise Exception("没有找到这串神秘代码！")
 
-            UserQ = User.objects.get(username=request.user.username)
+            UserQ = get(username=request.user.username)
             userprofile = UserQ.UserProfile
 
             founded.usedBy = request.user.username
@@ -662,7 +694,7 @@ def topup(request):
 @login_required
 def addCodes(request):
     try:
-        UserQ = User.objects.get(username=request.user.username)
+        UserQ = get(username=request.user.username)
         if UserQ.is_superuser == 0:
             raise Exception("死骗子！你不是管理员！")
         if request.method == 'POST':
@@ -686,7 +718,7 @@ def addCodes(request):
 @login_required
 def storeExchange(request):
     points_per_course = 10.0
-    UserQ = User.objects.get(username=request.user.username)
+    UserQ = get(username=request.user.username)
     points = UserQ.UserProfile.points
     availCourses = int(points / points_per_course)
     course_number = request.POST.get('course_number', None)
@@ -749,7 +781,7 @@ def alipay(request):
 def Pay(request, method):
     try:
         if request.method == 'POST':
-            UserQ = User.objects.get(username=request.user.username)
+            UserQ = get(username=request.user.username)
             total_fee = request.POST['amount']
             fee_pattern = "(^[1-9](\d+)?(\.\d{1,2})?$)|(^0$)|(^\d\.\d{1,2}$)"  # 匹配金额正则
             pattern = re.compile(fee_pattern)

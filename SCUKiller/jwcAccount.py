@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @retry(stop_max_attempt_number=3)
 def getProxy(username):
-    UserQ = User.objects.get(username=username)
+    UserQ = get(username=username)
     proxy_text = UserQ.UserProfile.jwcaccount.proxy
     try:
         if checkProxy(proxy_text):

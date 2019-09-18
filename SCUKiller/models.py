@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 
 # Create your models here.
@@ -7,6 +9,7 @@ from django.contrib.auth.models import User
 class UserProfile(models.Model):
     uid = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='UserProfile', unique=True)
+    is_active = models.BooleanField('是否激活', default=False)
     telephone = models.CharField('电话', max_length=11, blank=True)
     regTime = models.DateTimeField('注册时间', auto_now_add=True)
     points = models.FloatField('点数', default=10.0)
@@ -32,6 +35,23 @@ class jwcAccount(models.Model):
 
     def __str__(self):
         return self.jwcNumber
+
+
+class EmailVerifyRecord(models.Model):
+    # 验证码
+    code = models.CharField(max_length=20, verbose_name=u"验证码")
+    email = models.EmailField(max_length=50, verbose_name=u"邮箱")
+    # 包含注册验证和找回验证
+    send_type = models.CharField(verbose_name=u"验证码类型", max_length=10,
+                                 choices=(("register", u"注册"), ("forget", u"找回密码")))
+    send_time = models.DateTimeField(verbose_name=u"发送时间", default=datetime.datetime.now)
+
+    class Meta:
+        verbose_name = u"邮箱验证码"
+        verbose_name_plural = verbose_name
+
+    def __unicode__(self):
+        return '{0}({1})'.format(self.code, self.email)
 
 
 class courses(models.Model):

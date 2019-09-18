@@ -10,7 +10,8 @@ import json
 from urllib import error, parse, request
 from django.db.models import Q
 from . import jwcAccount as jwcVal
-from .views import CreateNotification
+
+from .utils import CreateNotification
 
 logger = jwcVal.logger
 
@@ -87,13 +88,14 @@ def postCourse(opener, availCourse):
     return success  # 循环完成也返回
 
 
-def watchCourses(request):
+def watchCourses():
     d_time = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '9:31', '%Y-%m-%d%H:%M')
     d_time1 = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '21:59', '%Y-%m-%d%H:%M')
     n_time = datetime.datetime.now()
 
     if not d_time < n_time < d_time1:
-        return HttpResponse("Not in Choosing Time Period! Now: " + str(n_time))
+        print("Not in Choosing Time!")
+        return
     attempts = 0
     success_cnt = 0
     coursesPending = courses.objects.filter(~Q(isSuccess=1))
@@ -139,12 +141,12 @@ def watchCourses(request):
             course.save()
         except Exception as e:
             logger.error(e)
-            if str(e) == '找不到提供的课程信息所对应的课程！':
+            if str(e) == '找不到提供的课程信息所对应的课程！':  # 找不到是因为已经选择了同类课程
                 course.status = '出错'
                 course.isSuccess = -1
                 course.save()
                 CreateNotification(course.host.user.username, "课程信息出错提示",
-                                   "您提供的课程信息《" + course.kcm + "》由于找不到对应课程，课程已被列入出错课程停止监测。")
+                                   "您提供的课程信息《" + course.kcm + "》由于找不到对应课程（可能是因为已经选择了同类课程），课程已被列入出错课程停止监测。")
                 continue
         if availCourse:  # 列表不为空
             for avail in availCourse:
@@ -173,4 +175,5 @@ def watchCourses(request):
         elif success == 'No Available Courses':  # 运气不好，没抢过其他人
             pass
 
-    return HttpResponse("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))
+    # return HttpResponse("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))
+    print("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))

@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^login/$', views.logIn, name="login"),
     url(r'^logout/$', views.logOut, name="logout"),
     url(r'^register/$', views.register, name="register"),
+    url(r'^active/(?P<active_code>.*)/$', views.ActiveUserView.as_view(), name="user_active"),
     url(r'^notification/$', views.notification, name="notification"),
     url(r'^courseManagement/$', views.courseManagement, name="courseManagement"),
 
@@ -23,7 +24,7 @@ urlpatterns = [
     url(r'^delReadNotification$', views.delReadNotification, name="delReadNotification"),
     url(r'^delNotification$', views.delNotification, name="delNotification"),
 
-    url(r'^watcher', watcher.watchCourses, name="watcher"),
+    # url(r'^watcher', watcher.watchCourses, name="watcher"),
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),
     url(r'^checkUsername', views.checkUsername, name="checkUsername"),
     url(r'^checkCookie', views.checkCookie, name="checkCookie"),
