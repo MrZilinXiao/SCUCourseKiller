@@ -2,7 +2,7 @@ import datetime
 
 from django.http import HttpResponse
 
-import SCUKiller.utils as utils
+from SCUKiller import utils
 from .config import *
 
 import json

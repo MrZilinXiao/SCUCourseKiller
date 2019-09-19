@@ -7,10 +7,10 @@ from SCUKiller.config import watch_interval
 
 def watchLoop():
     from SCUKiller import utils
-    while True:
+    while True:  # watch将导致数据库不同步 很烦
         t = threading.Thread(target=utils.watchCourses)
         t.start()
-        time.sleep(random.random()+watch_interval)
+        time.sleep(random.random() + watch_interval)
 
 
 class SCUKillerConfig(AppConfig):
