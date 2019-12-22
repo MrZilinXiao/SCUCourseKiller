@@ -1,10 +1,16 @@
+import hashlib
 import http.cookiejar
+from io import BytesIO
 from urllib import error
 from urllib import parse
 from urllib import request
 import requests
 import socket
 import logging
+
+from PIL import Image
+from django.contrib.messages.storage import session
+
 from .config import *
 from retrying import retry
 from .models import User
@@ -85,23 +91,32 @@ def valCookie(cookieStr, username=''):
 
 
 def valjwcAccount(stuID, stuPass, username=''):  # 可以更新Cookie
+    # imgbuf = requests.Session().get('http://zhjw.scu.edu.cn/img/captcha.jpg').content
+    # f = Image.open(BytesIO(imgbuf))
+    # f.save('./Logincap.jpg')
+    stuPass = stuPass.encode(encoding='utf-8')
+    hl = hashlib.md5()
+    hl.update(stuPass)
+    passwd = hl.hexdigest()
     login_data = {
         'j_username': stuID,
-        'j_password': stuPass,
+        'j_password': passwd,
         'j_captcha': 'error',
+        '_spring_security_remember_me': 'on'
     }
     [opener, cookie] = InitOpener('')  # 先不用代理
     # Login
     opener.open(request.Request(login_page_url, headers=headers))  # Get cookie
     login_data_parsed = parse.urlencode(login_data).encode("utf-8")
     loginRequest = request.Request(login_url, login_data_parsed, headers=headers)
-    try:
-        loginResponse = opener.open(loginRequest)
-        cookie_dict = requests.utils.dict_from_cookiejar(cookie)
-        return cookie_dict
-    except error.HTTPError as e:
-        logger.error(e)
-        if e.filename == 'http://zhjw.scu.edu.cn/login?errorCode=badCredentials':
-            raise Exception("密码错误！请删除教务处账号后重新添加！在监控期间请不要修改教务处密码！")
-        else:
-            raise Exception("登陆时遭遇未知错误！")
+    loginResponse = opener.open(loginRequest)
+    if loginResponse.url == 'http://zhjw.scu.edu.cn/login?errorCode=badCredentials':
+        raise Exception('密码错误！请删除教务处账号后重新添加！在监控期间请不要修改教务处密码！')
+    cookie_dict = requests.utils.dict_from_cookiejar(cookie)
+    return cookie_dict
+    # except error.HTTPError as e:
+    #     logger.error(e)
+    #     if e.filename == 'http://zhjw.scu.edu.cn/login?errorCode=badCredentials':
+    #         raise Exception("密码错误！请删除教务处账号后重新添加！在监控期间请不要修改教务处密码！")
+    #     else:
+    #         raise Exception("登陆时遭遇未知错误！")

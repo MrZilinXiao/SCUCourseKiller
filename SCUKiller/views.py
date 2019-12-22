@@ -364,6 +364,7 @@ def addCourse(request):
 
 @login_required
 def jwcAccount(request):
+    print("Adding Jwc Account")
     if request.user.is_authenticated:
         if request.method == 'GET':
             UserQ = User.objects.get(username=request.user.username)
