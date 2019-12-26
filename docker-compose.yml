@@ -1,0 +1,22 @@
+version: '3.3'
+services:
+  db:
+    container_name: db
+    image: mysql:5.7
+    volumes:
+      - "/home/luye/eval/data:/var/lib/mysql"  ##这里使用刚才mount的本地地址
+    environment:
+      MYSQL_DATABASE: guns
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
+        - 3306:3306
+
+  web:
+    build:
+      ./web 
+    ports:
+      - 8080:8080
+      - 9990:9990
+    depends_on:
+      - db

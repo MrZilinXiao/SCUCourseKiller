@@ -1,5 +1,7 @@
 import datetime
 
+from django.db import transaction
+
 from SCUKiller.send_email import send_html_email
 from SCUKiller.jwcAccount import logger
 from .config import *
@@ -12,7 +14,7 @@ import SCUKiller.watcher as watcher
 import json
 import re
 
-
+# 这里用事务锁
 def watchCourses():
     d_time = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '9:31', '%Y-%m-%d%H:%M')
     d_time1 = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '21:59', '%Y-%m-%d%H:%M')
@@ -23,7 +25,7 @@ def watchCourses():
         return
     attempts = 0
     success_cnt = 0
-    coursesPending = courses.objects.filter(~Q(isSuccess=1))
+    coursesPending = courses.objects.filter(~Q(isSuccess=1))  # 这里用select for update 会导致锁住所有未成功课程
     for course in coursesPending:
         availCourse = []
         success = ''
@@ -69,7 +71,7 @@ def watchCourses():
             if str(e) == '找不到提供的课程信息所对应的课程！':  # 找不到是因为已经选择了同类课程
                 course.status = '出错'
                 course.isSuccess = -1
-                course.save()
+                course.save()  # TODO: 通知重复，cookie更新后提交 但本次查询结果未变
                 CreateNotification(course.host.user.username, "课程信息出错提示",
                                    "您提供的课程信息《" + course.kcm + "》由于找不到对应课程（可能是因为已经选择了同类课程），课程已被列入出错课程停止监测。")
                 continue

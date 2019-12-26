@@ -7,6 +7,7 @@ import re
 import json
 
 import requests
+from django.db import transaction
 from django.views import View
 
 import SCUKiller.pay as pay
@@ -344,7 +345,7 @@ def addCourse(request):
                         request.session["courseList"] = rows
                         raise Exception("请在右侧的课程列表中选择需要监控的课程并提交！")
                 # 下面是给定课程号 课序号的业务逻辑 其他业务逻辑全部放到except中作为异常
-                UserQ.UserProfile.courseRemainingCnt -= 1
+                UserQ.UserProfile.courseRemainingCnt -= 1  # TODO: 验证减1不生效的逻辑
                 UserQ.UserProfile.courseCnt += 1
                 UserQ.UserProfile.save()
 
@@ -397,7 +398,7 @@ def jwcAccount(request):
                         user = User.objects.get(username=request.user.username)
                         jwc = jwcModel(jwcNumber=stuID, jwcPasswd=stuPass, userprofile=user.UserProfile,
                                        jwcCookie=str(cookie_dict))
-                        jwc.save()  # TODO: verify if this is working
+                        jwc.save()
                         CreateNotification(username=request.user.username, title="教务处账号绑定成功",
                                            content="您已经成功绑定学号为" + str(stuID) + "的教务处账号！（每个学号只能享受一个体验课程量！）")
                         return redirect('jwcAccount')
@@ -447,6 +448,7 @@ def checkCookie(request):
 
 
 @login_required
+@transaction.atomic
 def courseManagement(request):
     if request.user.is_authenticated:
         UserQ = User.objects.get(username=request.user.username)
@@ -458,7 +460,9 @@ def courseManagement(request):
             CourseQ = courses.objects.get(cid=cidDel)
             if CourseQ.gid != '':  # 按分组添加的课程
                 delCourses = courses.objects.filter(gid=CourseQ.gid)
-                delCourses.delete()
+                delCourses.delete()  # 数据变化时，本事务会回滚 https://www.jianshu.com/p/5150010a08c5
+                # TODO: 解决删除回滚
+                # 拟用悲观锁解决
                 notice = "课程《" + CourseQ.kcm + "》已被成功删除，与其一起添加的课程也被成功删除。"
             else:
                 CourseQ.delete()
@@ -560,6 +564,7 @@ def delNotification(request):
 
 
 @login_required
+@transaction.atomic
 def getCourseList(request):
     if request.method == 'GET':
         try:
