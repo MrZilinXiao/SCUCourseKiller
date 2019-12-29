@@ -1,22 +1,37 @@
 version: '3.3'
 services:
-  db:
-    container_name: db
-    image: mysql:5.7
-    volumes:
-      - "/home/luye/eval/data:/var/lib/mysql"  ##这里使用刚才mount的本地地址
-    environment:
-      MYSQL_DATABASE: guns
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
-      MYSQL_ROOT_PASSWORD: root
-        - 3306:3306
+  db:
+    container_name: mymysql
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: SCUCourseKiller
+      MYSQL_USER: root
+      MYSQL_PASSWORD: SCUCourseKiller
+      MYSQL_ROOT_PASSWORD: SCUCourseKiller
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --init-connect='SET NAMES utf8mb4;' --innodb-flush-log-at-trx-commit=0
+#    networks:
+#      killerNet:
+#        ipv4_address: 172.19.0.2
 
-  web:
-    build:
-      ./web 
-    ports:
-      - 8080:8080
-      - 9990:9990
-    depends_on:
-      - db
+  web:
+    restart: always
+    container_name: SCUCourseKiller
+    build: ./
+    command: ["./wait-for-it.sh", "db:3306"]
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    links:
+      - db
+#    networks:
+#      killerNet:
+#        ipv4_address: 172.19.0.3
+
+#networks:
+#  killerNet:
+#    driver: bridge
+#    ipam:
+#      config:
+#        - subnet: 172.19.0.0/16

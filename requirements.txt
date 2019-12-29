@@ -1,3 +1,4 @@
+mysqlclient
 retrying
 Django==2.1.8
 Pillow==5.3.0

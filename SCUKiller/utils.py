@@ -5,14 +5,15 @@ from django.db import transaction
 from SCUKiller.send_email import send_html_email
 from SCUKiller.jwcAccount import logger
 from .config import *
-from .models import UserProfile, User, notification as noti, courses
+from .models import User, notification as noti, courses, jwcAccount
 from urllib import parse
 from urllib import request
-from django.db.models import Q
+from django.db.models import Q, F
 from . import jwcAccount as jwcVal
 import SCUKiller.watcher as watcher
 import json
 import re
+
 
 # 这里用事务锁
 def watchCourses():
@@ -42,39 +43,56 @@ def watchCourses():
             if str(e) == 'Cookie已经失效！已经更新为最新的Cookie！' or str(
                     e) == "HTTP Error 500: Internal Server Error" or str(
                 e) == "HTTP Error 302: Moved Temporarily":
+                tempCookie = jwc.jwcCookie
                 try:
-                    jwc.jwcCookie = str(jwcVal.valjwcAccount(jwc.jwcNumber, jwc.jwcPasswd, course.host.user.username))
-                    jwc.save()
-                    CreateNotification(course.host.user.username, "Cookie更新提示",
-                                       "在一次监测中发现您的Cookie已经失效，已经成功为您更新Cookie，请确保在未选中心仪的课程之前不要登录教务处网站！")
+                    with transaction.atomic():
+                        jwc = course.host.jwcaccount.objects.select_for_update()  # TODO: Need Further Checking
+                        # Another Option:
+                        # jwc = jwcAccount.objects.select_for_update(XXX)
+
+                        if jwc.jwcCookie == tempCookie:
+                            jwc.jwcCookie = str(
+                                jwcVal.valjwcAccount(jwc.jwcNumber, jwc.jwcPasswd, course.host.user.username))
+                            jwc.save()
+                            CreateNotification(course.host.user.username, "Cookie更新提示",
+                                               "在一次监测中发现您的Cookie已经失效，已经成功为您更新Cookie"
+                                               "，通常情况下此提醒会出现在您首次添加课程时，请确保在未选中心仪的课程之前不要登录教务处网站！")
                     continue  # 更新Cookie后此轮不watch 等下一轮
                 except Exception as e:
                     logger.error(str(e) + str(jwc.jwcNumber))
-                    invalidCourses = course.objects.filter(host=course.host)
-                    for item in invalidCourses:
-                        item.isSuccess = -1  # 教务处密码错误 此用户所有课程设为异常
-                        item.status = '出错'
-                        item.save()
+                    invalidCourses = courses.objects.filter(~Q(isSuccess=-1), host=course.host)
+                    invalidCourses.update(isSuccess=-1, status='出错')
+                    # for item in invalidCourses:
+                    #     item.isSuccess = -1  # 教务处密码错误 此用户所有课程设为异常
+                    #     item.status = '出错'
+                    #     item.save()
                     CreateNotification(course.host.user.username, "教务处账号失效提示",
                                        "在一次监测中发现无法登录您的教务处账号，请前去删除您的所有课程并重新绑定教务处账号！")
                     continue
 
         (opener, cookie) = jwcVal.InitOpener('', jwc.jwcCookie)  # 先不使用代理
         try:  # 在函数内部判断是关键词模式还是指定课程模式
+            # 前面进行了：检查本地课程状态、Cookie是否失效、教务处账号是否失效
             availCourse = watcher.specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
                                                 course.term)  # 返回一个可选课程列表
-            course.attempts += 1
+            # course.attempts += 1
+            course.attempts = F('attempts') + 1
             attempts += 1
             course.save()
         except Exception as e:
             logger.error(e)
-            if str(e) == '找不到提供的课程信息所对应的课程！':  # 找不到是因为已经选择了同类课程
-                course.status = '出错'
-                course.isSuccess = -1
-                course.save()  # TODO: 通知重复，cookie更新后提交 但本次查询结果未变
+            if str(e) == '找不到提供的课程信息所对应的课程！':  # 找不到是因为已经选择了同类课程/压根选不了
                 CreateNotification(course.host.user.username, "课程信息出错提示",
                                    "您提供的课程信息《" + course.kcm + "》由于找不到对应课程（可能是因为已经选择了同类课程），课程已被列入出错课程停止监测。")
-                continue
+            else:
+                logger.error(course.host.user.username + "遇到了未知错误")
+
+            course.refresh_from_db()
+            course.status = '出错'
+            course.isSuccess = -1
+            course.save()  # TODO: 通知重复，cookie更新后提交 但本次查询结果未变
+            continue
+
         if availCourse:  # 列表不为空
             for avail in availCourse:
                 _avail = [avail]

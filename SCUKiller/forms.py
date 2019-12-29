@@ -125,7 +125,7 @@ class AddjwcAccount(forms.Form):
     #             cookie = jwcAccount.valjwcAccount(stuID, stuPass)
     #             user = User.objects.get(username=self.username)
     #             jwc = jwcModel(jwcNumber=stuID, jwcPasswd=stuPass, jwcBelongto=user.UserProfile, jwcCookie=cookie)
-    #             jwc.save()  # TODO: verify if this is working
+    #             jwc.save()
     #         except Exception as e:
     #             print(e)
     #             raise forms.ValidationError(u"登录失败！")
