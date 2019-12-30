@@ -348,8 +348,8 @@ def addCourse(request):
 
                 # UserQ.UserProfile.courseRemainingCnt -= 1  # TODO: 验证减1不生效的逻辑 Solved Solution: F() 看看是否有效
                 # UserQ.UserProfile.courseCnt += 1
-                UserQ.UserProfile.courseRemainingCnt = F('UserProfile.courseRemainingCnt') - 1
-                UserQ.UserProfile.courseCnt = F('UserProfile.courseCnt') + 1
+                UserQ.UserProfile.courseRemainingCnt = F('courseRemainingCnt') - 1
+                UserQ.UserProfile.courseCnt = F('courseCnt') + 1
                 UserQ.UserProfile.save()
 
                 course = courses(kch=kch, kxh=kxh, kcm=kcm, keyword=keyword, host=host, type=ctype, term=term,

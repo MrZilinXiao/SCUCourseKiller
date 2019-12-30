@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import transaction
+from django.http import HttpResponse
 
 from SCUKiller.send_email import send_html_email
 from SCUKiller.jwcAccount import logger
@@ -16,7 +17,7 @@ import re
 
 
 # 这里用事务锁
-def watchCourses():
+def watchCourses(request = None):
     d_time = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '9:31', '%Y-%m-%d%H:%M')
     d_time1 = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '21:59', '%Y-%m-%d%H:%M')
     n_time = datetime.datetime.now()
@@ -119,9 +120,9 @@ def watchCourses():
                                "系统在选择您的课程《" + course.kcm + "》时，发生了课程冲突。在课表空余不足时，请尽量使用指定课程模式而非关键字模式。")
         elif success == 'No Available Courses':  # 运气不好，没抢过其他人
             pass
-
-    # return HttpResponse("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))
     logger.info("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))
+    return HttpResponse("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))
+
 
 
 def CreateNotification(username, title, content):
