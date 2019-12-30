@@ -72,6 +72,7 @@ class courses(models.Model):
     attempts = models.IntegerField(verbose_name="尝试次数", default=0)
     isSuccess = models.IntegerField(verbose_name='是否成功', default=0)  # -1 异常 0 未成功 1 已成功
     gid = models.CharField(verbose_name="组编号", default='', max_length=100)
+    latestRemaining = models.IntegerField(verbose_name="最新剩余课余量", default=0)
 
     class Meta:
         verbose_name = "课程信息"
@@ -109,3 +110,7 @@ class Orders(models.Model):
     payTime = models.CharField('订单支付时间', max_length=1000)
     closedTime = models.CharField('订单关闭时间', max_length=1000)
     status = models.IntegerField('状态', default=0)  # 0--等待 -1--失败 1---成功
+
+
+class GlobalConf(models.Model):
+    isActive = models.BooleanField(default=True)

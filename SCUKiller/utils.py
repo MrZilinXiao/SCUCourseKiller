@@ -17,14 +17,15 @@ import re
 
 
 # 这里用事务锁
-def watchCourses(request = None):
+def watchCourses(request=None, lock=None):
     d_time = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '9:31', '%Y-%m-%d%H:%M')
     d_time1 = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '21:59', '%Y-%m-%d%H:%M')
     n_time = datetime.datetime.now()
 
     if not d_time < n_time < d_time1:
         logger.info("Not in Choosing Time!")
-        return
+        return HttpResponse("Not in Choosing Time!")
+
     attempts = 0
     success_cnt = 0
     coursesPending = courses.objects.filter(~Q(isSuccess=1))  # 这里用select for update 会导致锁住所有未成功课程
@@ -37,27 +38,29 @@ def watchCourses(request = None):
         if course.isSuccess == -1:  # 跳过异常课程
             continue
         jwc = course.host.jwcaccount
+        lock.acquire()
         try:  # 检查Cookie或账号是否失效
+            jwc.refresh_from_db()
             jwcVal.valCookie(jwc.jwcCookie, course.host.user.username)
         except Exception as e:
             print(e, jwc.jwcNumber)
             if str(e) == 'Cookie已经失效！已经更新为最新的Cookie！' or str(
                     e) == "HTTP Error 500: Internal Server Error" or str(
                 e) == "HTTP Error 302: Moved Temporarily":
-                tempCookie = jwc.jwcCookie
                 try:
-                    with transaction.atomic():
-                        jwc = course.host.jwcaccount.objects.select_for_update()  # TODO: Need Further Checking
-                        # Another Option:
-                        # jwc = jwcAccount.objects.select_for_update(XXX)
+                    jwc.jwcCookie = str(
+                        jwcVal.valjwcAccount(jwc.jwcNumber, jwc.jwcPasswd, course.host.user.username))
+                    jwc.save()
+                    CreateNotification(course.host.user.username, "Cookie更新提示",
+                                       "在一次监测中发现您的Cookie已经失效，已经成功为您更新Cookie"
+                                       "，通常情况下此提醒会出现在您首次添加课程时，请确保在未选中心仪的课程之前不要登录教务处网站！")
+                    # with transaction.atomic():
+                    #     jwc = course.host.jwcAccount.objects.select_for_update()  # TODO: Need Further Checking
+                    #     # Another Option:
+                    #     # jwc = jwcAccount.objects.select_for_update(XXX)
+                    #
+                    #     if jwc.jwcCookie == tempCookie:
 
-                        if jwc.jwcCookie == tempCookie:
-                            jwc.jwcCookie = str(
-                                jwcVal.valjwcAccount(jwc.jwcNumber, jwc.jwcPasswd, course.host.user.username))
-                            jwc.save()
-                            CreateNotification(course.host.user.username, "Cookie更新提示",
-                                               "在一次监测中发现您的Cookie已经失效，已经成功为您更新Cookie"
-                                               "，通常情况下此提醒会出现在您首次添加课程时，请确保在未选中心仪的课程之前不要登录教务处网站！")
                     continue  # 更新Cookie后此轮不watch 等下一轮
                 except Exception as e:
                     logger.error(str(e) + str(jwc.jwcNumber))
@@ -70,11 +73,14 @@ def watchCourses(request = None):
                     CreateNotification(course.host.user.username, "教务处账号失效提示",
                                        "在一次监测中发现无法登录您的教务处账号，请前去删除您的所有课程并重新绑定教务处账号！")
                     continue
+        finally:
+            lock.release()
 
         (opener, cookie) = jwcVal.InitOpener('', jwc.jwcCookie)  # 先不使用代理
+
         try:  # 在函数内部判断是关键词模式还是指定课程模式
             # 前面进行了：检查本地课程状态、Cookie是否失效、教务处账号是否失效
-            availCourse = watcher.specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
+            (availCourse, course.latestRemaining) = watcher.specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
                                                 course.term)  # 返回一个可选课程列表
             # course.attempts += 1
             course.attempts = F('attempts') + 1
@@ -85,16 +91,18 @@ def watchCourses(request = None):
             if str(e) == '找不到提供的课程信息所对应的课程！':  # 找不到是因为已经选择了同类课程/压根选不了
                 CreateNotification(course.host.user.username, "课程信息出错提示",
                                    "您提供的课程信息《" + course.kcm + "》由于找不到对应课程（可能是因为已经选择了同类课程），课程已被列入出错课程停止监测。")
+                course.refresh_from_db()
+                course.status = '出错'
+                course.isSuccess = -1
+                course.save()
             else:
                 logger.error(course.host.user.username + "遇到了未知错误")
 
-            course.refresh_from_db()
-            course.status = '出错'
-            course.isSuccess = -1
-            course.save()  # TODO: 通知重复，cookie更新后提交 但本次查询结果未变
             continue
-
-        if availCourse:  # 列表不为空
+        finally:
+            pass
+            # lock.release()
+        if availCourse:  # 列表不为空  # TODO: 多线程时，此处将有多个线程同时不为空，如何实现只post一个 引发的问题：成功后，后一个线程的失败操作，将导致数据库被覆盖为失败
             for avail in availCourse:
                 _avail = [avail]
                 success = watcher.postCourse(opener, _avail)  # 一个一个POST避免冲突，一个成功就break

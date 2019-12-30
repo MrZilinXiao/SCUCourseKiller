@@ -61,6 +61,7 @@
                             <th>课程类型</th>
                             <th data-hide="all">学期</th>
                             <th data-hide="all">添加时间</th>
+                            <th data-hide="all">最新课余量</th>
                             <th data-hide="all">尝试次数</th>
                             <th data-hide="all">其他</th>
                             <th data-hide="all">选项操作</th>
@@ -78,6 +79,7 @@
                                     <td>{{ course.type }}</td>
                                     <td>{{ course.term }}</td>
                                     <td>{{ course.addTime }}</td>
+                                    <td>{{ course.latestRemaining }}</td>
                                     <td><span class="pie">{{ course.attempts }}</span></td>
                                     <td>{% if course.kcm != '' %}授课教师：{{ course.teacher }}<br/>校区：{{ course.campus }}
                                         <br/>上课地点：{{ course.location }}{% else %}无{% endif %}</td>

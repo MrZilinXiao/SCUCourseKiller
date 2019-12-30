@@ -14,6 +14,7 @@ logger = jwcVal.logger
 
 
 def specificWatch(opener, keyword, kch, kxh, type, term):
+    latestRemaining = -100
     #  根据课程类型构造POST数据
     if type == '自由选课':
         if keyword == '':
@@ -40,12 +41,14 @@ def specificWatch(opener, keyword, kch, kxh, type, term):
     if len(parser) == 0:
         raise Exception("找不到提供的课程信息所对应的课程！")
     for i in range(len(parser)):
+        if kxh == parser[i]['kxh'] and kch == parser[i]['kch']:
+            latestRemaining = parser[i]['bkskyl']
         if parser[i]['bkskyl'] > 0:
             if kxh == '' or kxh == parser[i]['kxh']:
                 if kch == '' or kch == parser[i]['kch']:
                     selectList.append(parser[i])
 
-    return selectList  # 没有watch到仍有课余量的课程 返回空List
+    return selectList, latestRemaining  # 没有watch到仍有课余量的课程 返回空List
 
     # 返回数据示例
     # {'bkskrl': 416, 'bkskyl': 0, 'cxjc': '3', 'id': '4077', 'jasm': '水上报告厅', 'jxlm': '一教A座', 'kc
