@@ -9,6 +9,11 @@ templates/js/*
 # C extensions
 *.so
 
+.log
+log/
+
+.DS_Store
+
 # Distribution / packaging
 .Python
 build/

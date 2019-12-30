@@ -38,7 +38,8 @@ def watchCourses(request=None, lock=None):
         if course.isSuccess == -1:  # 跳过异常课程
             continue
         jwc = course.host.jwcaccount
-        lock.acquire()
+        lock.acquire()  # 避免多次刷新同一账号的cookie
+        # TODO:课程应按人排序，每次拿同一人的课程避免验证开销 Solution（尚未完成）:先选择所有有课的用户，按用户名filter
         try:  # 检查Cookie或账号是否失效
             jwc.refresh_from_db()
             jwcVal.valCookie(jwc.jwcCookie, course.host.user.username)
@@ -64,7 +65,7 @@ def watchCourses(request=None, lock=None):
                     continue  # 更新Cookie后此轮不watch 等下一轮
                 except Exception as e:
                     logger.error(str(e) + str(jwc.jwcNumber))
-                    invalidCourses = courses.objects.filter(~Q(isSuccess=-1), host=course.host)
+                    invalidCourses = courses.objects.filter(isSuccess=0, host=course.host)
                     invalidCourses.update(isSuccess=-1, status='出错')
                     # for item in invalidCourses:
                     #     item.isSuccess = -1  # 教务处密码错误 此用户所有课程设为异常
@@ -80,8 +81,9 @@ def watchCourses(request=None, lock=None):
 
         try:  # 在函数内部判断是关键词模式还是指定课程模式
             # 前面进行了：检查本地课程状态、Cookie是否失效、教务处账号是否失效
-            (availCourse, course.latestRemaining) = watcher.specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
-                                                course.term)  # 返回一个可选课程列表
+            (availCourse, course.latestRemaining) = watcher.specificWatch(opener, course.keyword, course.kch,
+                                                                          course.kxh, course.type,
+                                                                          course.term)  # 返回一个可选课程列表
             # course.attempts += 1
             course.attempts = F('attempts') + 1
             attempts += 1
@@ -103,12 +105,22 @@ def watchCourses(request=None, lock=None):
             pass
             # lock.release()
         if availCourse:  # 列表不为空  # TODO: 多线程时，此处将有多个线程同时不为空，如何实现只post一个 引发的问题：成功后，后一个线程的失败操作，将导致数据库被覆盖为失败
-            for avail in availCourse:
-                _avail = [avail]
-                success = watcher.postCourse(opener, _avail)  # 一个一个POST避免冲突，一个成功就break
-                if success == 'success':
-                    success_cnt += 1
-                    break
+            lock.acquire()  # TODO: lock导致了SQL连接泄露，但不加lock，每个线程拿到非空列表后都会去post一遍 Solution: 确定有非空列表后，拿锁，再次刷新（因为有非空列表是低概率事件）
+            try:
+                (availCourse, _) = watcher.specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
+                                                         course.term)
+                if availCourse:
+                    logger.info("二次确认通过，开始提交...")
+                for avail in availCourse:
+                    _avail = [avail]
+                    success = watcher.postCourse(opener, _avail)  # 一个一个POST避免冲突，一个成功就break
+                    if success == 'success':  # 此处逻辑有误，还好一般availCourse不多
+                        success_cnt += 1
+                        break
+            except Exception as e:
+                logger.error("二次确认时遇见错误：" + str(e))
+            finally:
+                lock.release()
         if success == 'success':
             course.status = '已完成'
             course.isSuccess = 1
@@ -127,10 +139,17 @@ def watchCourses(request=None, lock=None):
             CreateNotification(course.host.user.username, "课程冲突提示",
                                "系统在选择您的课程《" + course.kcm + "》时，发生了课程冲突。在课表空余不足时，请尽量使用指定课程模式而非关键字模式。")
         elif success == 'No Available Courses':  # 运气不好，没抢过其他人
-            pass
+            logger.info(course.kcm + "没能抢过……")
+
+        elif success == '验证码':
+            logger.info("此用户选课出现了验证码，需要随后再试")
+            invalidCourses = courses.objects.filter(isSuccess=0, host=course.host)
+            invalidCourses.update(isSuccess=-1, status='出错')
+            CreateNotification(course.host.user.username, "验证码提示",
+                               "在一次抢课中发现您的账号出现了验证码，请您随后再试，目前已将您账号所有课程设为失败。")
+
     logger.info("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))
     return HttpResponse("Attempts on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))
-
 
 
 def CreateNotification(username, title, content):
@@ -205,18 +224,28 @@ def checkResult(result_data, opener):  # 检查结果界面
                 #     print("Success select or you've alredy selected")
                 #     success = True
                 # if (result['isFinish'].find("成功") != -1):
+                logger.info("成功！")
                 success = 'success'
                 break
-            if result['result'][0].find('没有课余量') != -1:
+            elif result['result'][0].find('没有课余量') != -1:
                 success = 'No Available Courses'
+                logger.info("没有课余量")
                 break
-            if result['result'][0].find('冲突') != -1:
+            elif result['result'][0].find('冲突') != -1:
                 success = 'Conflict'
+                logger.info("冲突")
+                break
+            elif result['result'][0].find('校验失败') != -1:
+                success = '验证码'
+                logger.info("验证码问题！！！")
+                break
+
             # else:
             #     print("Error")
     except Exception as e:
         print(e)
-        print("Error get result page")
+        logger.info("查询选课结果失败，不代表选课未成功")
+        return False
     return success
 
 

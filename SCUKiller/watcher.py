@@ -68,11 +68,11 @@ def postCourse(opener, availCourse):
         #     course.kxh))
         token = utils.getToken(opener)
         selectData = utils.getSelectData(token,
-                                         availCourse)  # TODO: postToken和postSelect 后者带了inputCode和tokenValue 这里进行改动 看看只post一遍是否可行
+                                         availCourse)
 
         utils.postToken(token, availCourse, opener)  # 验证码不能为空在这里出现，提交了选课信息
         try:
-            selectResponse = utils.postSelect(selectData, opener)  # Post选课 selectResponse回复 没带token inputCode
+            selectResponse = utils.postSelect(selectData, opener)  # 查询结果
         except error.HTTPError as e:
             print("Failed..." + str(e))
             continue
@@ -80,9 +80,9 @@ def postCourse(opener, availCourse):
         success = utils.checkResult(result_data, opener)  # 查询选课结果 查询失败将会循环
         if success == 'Conflict' or success == 'No Available Courses':
             break  # 课被抢完了 或者 课程冲突
-        elif not success:  # 验证码问题
+        elif not success:  # 查询选课结果失败，再抢一次
             continue
-        else:  # 成功 success为'success'
+        else:  # 成功 success为'success'  有验证码 success为'验证码'
             return success
 
     return success  # 循环完成也返回
