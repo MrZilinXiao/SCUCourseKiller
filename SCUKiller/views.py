@@ -145,12 +145,12 @@ def logIn(request):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     UserQ = User.objects.get(username=username)
-                    if UserQ.UserProfile.is_active:
-                        login(request, user)  # 调用login方法登陆账号
-                        logger.info("登录成功！")
-                        return redirect(request.session['login_from'])
-                    else:
-                        errormsg = "用户未激活！"
+                    # if UserQ.UserProfile.is_active:
+                    login(request, user)  # 调用login方法登陆账号
+                    logger.info("登录成功！")
+                    return redirect(request.session['login_from'])
+                    # else:
+                    #     errormsg = "用户未激活！"
                 elif captcha != request.session['CheckCode'].lower():
                     errormsg = "验证码错误"
                 else:
