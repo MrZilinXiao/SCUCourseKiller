@@ -472,7 +472,7 @@ def courseManagement(request):
                     CourseQ.delete()
                 notice = "课程《" + CourseQ.kcm + "》已被成功删除"
             if CourseQ.status != 1:
-                UserP.courseRemainingCnt = F("courseRemainingCnt") + 1
+                UserP.courseRemainingCnt = F("courseRemainingCnt") + 1  # #TODO:删除非成功课程时课程量有问题
                 UserP.save()
             CreateNotification(username=request.user.username, title="课程删除成功",
                                content=notice)
@@ -648,8 +648,8 @@ def getCourseList(request):
             CreateNotification(username=request.user.username, title="批量课程添加成功",
                                content="您已经成功通过多选课程的方式，添加课程号为" + str(kch) + "，课序号为" + str(kxh) + "的课程《" + kcm + "》！")
 
-        UserQ.UserProfile.courseRemainingCnt -= 1
-        UserQ.UserProfile.courseCnt += 1
+        UserQ.UserProfile.courseRemainingCnt = F('courseRemainingCnt') - 1
+        UserQ.UserProfile.courseCnt = F('courseCnt') + 1
         UserQ.UserProfile.save()
         del request.session["courseList"]
         return HttpResponse('success')

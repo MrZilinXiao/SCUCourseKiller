@@ -72,12 +72,12 @@ def postCourse(opener, availCourse):
 
         utils.postToken(token, availCourse, opener)  # 验证码不能为空在这里出现，提交了选课信息
         try:
-            selectResponse = utils.postSelect(selectData, opener)  # 查询结果
+            selectResponse = utils.postSelect(selectData, opener)  # 进入waitingfor查询结果，在这里可能出现logout
         except error.HTTPError as e:
             print("Failed..." + str(e))
             continue
         result_data, success = utils.getResultData(selectResponse)  # 解析selectResponse
-        success = utils.checkResult(result_data, opener)  # 查询选课结果 查询失败将会循环
+        success = utils.checkResult(result_data, opener)  # 查询选课结果
         if success == 'Conflict' or success == 'No Available Courses':
             break  # 课被抢完了 或者 课程冲突
         elif not success:  # 查询选课结果失败，再抢一次

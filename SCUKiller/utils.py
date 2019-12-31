@@ -108,9 +108,13 @@ def watchCourses(request=None, lock=None):
             lock.acquire()  # TODO: lock导致了SQL连接泄露，但不加lock，每个线程拿到非空列表后都会去post一遍 Solution: 确定有非空列表后，拿锁，再次刷新（因为有非空列表是低概率事件）
             try:
                 (availCourse, _) = watcher.specificWatch(opener, course.keyword, course.kch, course.kxh, course.type,
-                                                         course.term)
+                                                         course.term)  # 不妥，万一系统自己有课余量缓存咋办
                 if availCourse:
                     logger.info("二次确认通过，开始提交...")
+                    jwc.jwcCookie = str(
+                        jwcVal.valjwcAccount(jwc.jwcNumber, jwc.jwcPasswd, course.host.user.username))
+                    jwc.save()
+                    # 通过后马上拿最新Cookie 免得被系统返回/logout
                 for avail in availCourse:
                     _avail = [avail]
                     success = watcher.postCourse(opener, _avail)  # 一个一个POST避免冲突，一个成功就break
@@ -214,11 +218,13 @@ def checkResult(result_data, opener):  # 检查结果界面
 
     try:
         result_data_parsed = parse.urlencode(result_data).encode('utf-8')
-        resultRequest = request.Request(result_url, result_data_parsed, headers=headers)
+        resultRequest = request.Request(result_url, result_data_parsed, headers=headers)  # 查询结果
 
         for i in range(1, checkResultAttempt):
             resultResponse = opener.open(resultRequest)
-            result = json.loads(resultResponse.read().decode('utf-8'))
+            result = json.loads(resultResponse.read().decode(
+                'utf-8'))  # result示例：{"result":["308104020_06:选课成功！"],"isFinish":true,"schoolId":"100006"}
+            # Request URL: http://zhjw.scu.edu.cn/student/courseSelect/selectResult/query
             print(result)
             if result['isFinish'] == True and result['result'][0].find('成功') != -1:
                 #     print("Success select or you've alredy selected")
