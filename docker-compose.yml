@@ -17,6 +17,13 @@ services:
 #    networks:
 #      killerNet:
 #        ipv4_address: 172.19.0.2
+  redis:
+    container_name: myredis
+    image: redis:latest
+    restart: always
+    ports:
+    - 6379:6379
+
 
   web:
     restart: always
@@ -27,8 +34,10 @@ services:
       - 8000:8000
     depends_on:
       - db
+      - redis
     links:
       - db
+      - redis
 #    networks:
 #      killerNet:
 #        ipv4_address: 172.19.0.3

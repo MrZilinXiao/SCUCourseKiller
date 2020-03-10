@@ -1,9 +1,11 @@
 from . import views
 from . import utils
+from . import tasks
 from django.conf.urls import url
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
+
     url(r'^inner_index/$', views.inner_index, name='inner_index'),
     # User Management Module
     url(r'^login/$', views.logIn, name="login"),
@@ -36,7 +38,7 @@ urlpatterns = [
     url(r'^check_pay', views.check_pay, name="check_pay"),
     url(r'^cancel_order', views.cancel_order, name="cancel_order"),
     url(r'^paycat_callback', views.paycat_callback, name="pay_callback"),
-
+    # url(r'^test/$', tasks.watchUserCourses, name='test'),
 ]
 
 handler404 = views.page_not_found

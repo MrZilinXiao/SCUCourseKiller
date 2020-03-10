@@ -19,6 +19,7 @@ class SCUKillerConfig(AppConfig):
     name = 'SCUKiller'
 
     def ready(self):
-        watch_Loop = threading.Thread(target=watchLoop)
-        watch_Loop.setDaemon(True)
-        watch_Loop.start()
+        pass  # 考虑使用celery
+        # watch_Loop = threading.Thread(target=watchLoop)
+        # watch_Loop.setDaemon(True)
+        # watch_Loop.start()

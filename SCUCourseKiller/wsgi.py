@@ -11,6 +11,8 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
+from .celeryconfig import *  # 导入Celery配置信息
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'SCUCourseKiller.settings')
 
 application = get_wsgi_application()

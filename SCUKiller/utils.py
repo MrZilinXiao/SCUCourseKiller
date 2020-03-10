@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from SCUKiller.send_email import send_html_email
 from SCUKiller.jwcAccount import logger
 from .config import *
-from .models import User, notification as noti, courses, jwcAccount
+from .models import User, notification as noti, courses
 from urllib import parse
 from urllib import request
 from django.db.models import Q, F
@@ -15,6 +15,9 @@ import SCUKiller.watcher as watcher
 import json
 import re
 
+
+# TODO:重构思路：1.按用户刷新课余量，可避免每次的Cookie验证开销（此处正选时，查询时如果Cookie有问题报什么，如果不报，说明查询没有做鉴权）
+# TODO: 2.提交操作采用Celery异步方式，避免阻塞正常刷新（此处考虑清楚，当一个课程被提交到队列中后应该不再刷新它，避免race）
 
 # 这里用事务锁
 def watchCourses(request=None, lock=None):
@@ -84,7 +87,6 @@ def watchCourses(request=None, lock=None):
             (availCourse, course.latestRemaining) = watcher.specificWatch(opener, course.keyword, course.kch,
                                                                           course.kxh, course.type,
                                                                           course.term)  # 返回一个可选课程列表
-            # course.attempts += 1
             course.attempts = F('attempts') + 1
             attempts += 1
             course.save()
@@ -161,7 +163,7 @@ def CreateNotification(username, title, content):
     notifi = noti(host=UserQ, title=title, content=content)
     notifi.save()
     EmailAddress = UserQ.email
-    send_mail([EmailAddress], title, content)
+    # send_mail([EmailAddress], title, content)  # 发邮件功能调试中
     print("[%s][%s]%s" % (username, title, content))
     logger.info("[%s][%s]%s" % (username, title, content))
 

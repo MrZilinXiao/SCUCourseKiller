@@ -257,7 +257,7 @@ def addCourse(request):
                                 raise Exception("系统中有相同的课程未完成！")
                 host = UserQ.UserProfile
                 # DONE: 加入课程时验证课程是否存在
-                # DONE:如果课程号与课序号都给出则关闭关键词模式
+                # DONE: 如果课程号与课序号都给出则关闭关键词模式
                 # DONE: 在前端可视化返回符合要求的课程列表
 
                 # 监控方式归纳
@@ -472,7 +472,7 @@ def courseManagement(request):
                     CourseQ.delete()
                 notice = "课程《" + CourseQ.kcm + "》已被成功删除"
             if CourseQ.status != 1:
-                UserP.courseRemainingCnt = F("courseRemainingCnt") + 1  # #TODO:删除非成功课程时课程量有问题
+                UserP.courseRemainingCnt = F("courseRemainingCnt") + 1  # TODO:删除非成功课程时课程量有问题
                 UserP.save()
             CreateNotification(username=request.user.username, title="课程删除成功",
                                content=notice)

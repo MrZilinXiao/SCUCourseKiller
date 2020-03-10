@@ -59,6 +59,7 @@ class courses(models.Model):
     host = models.ForeignKey(UserProfile, related_name='coursesHost', on_delete=models.DO_NOTHING)
     status = models.CharField(verbose_name='状态', max_length=100, default='等待中')
     # 等待中 运行中 已完成 出错
+    inq = models.BooleanField(verbose_name='正在队列中', default=False)
     keyword = models.CharField(verbose_name='关键词', max_length=50, default='')
     kcm = models.CharField(verbose_name='课程名', max_length=100, default='')
     kch = models.CharField(verbose_name='课程号', max_length=100, default='')

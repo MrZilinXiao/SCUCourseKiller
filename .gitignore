@@ -10,7 +10,7 @@ templates/js/*
 *.so
 
 .log
-log/
+log/*
 
 .DS_Store
 
