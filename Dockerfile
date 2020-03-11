@@ -7,7 +7,7 @@ ENV DOCKER_PROJECT=/root/SCUCourseKiller
 WORKDIR $DOCKER_HOME
 RUN mkdir SCUCourseKiller
 RUN yum -y install epel-release yum-utils && \
-    yum -y install git nginx gcc gcc-c++ crontabs && \
+    yum -y install git nginx gcc gcc-c++ && \
 	yum -y install python36 python36-devel python36-pip && \
     yum clean all
 RUN yum -y install mariadb-devel mysql-devel

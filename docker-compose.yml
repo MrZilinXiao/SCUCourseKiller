@@ -33,6 +33,7 @@ services:
     ports:
       - 8000:8000
       - 5555:5555
+      - 10022:22
     depends_on:
       - db
       - redis
