@@ -471,7 +471,7 @@ def courseManagement(request):
                 with transaction.atomic():
                     CourseQ.delete()
                 notice = "课程《" + CourseQ.kcm + "》已被成功删除"
-            if CourseQ.status != 1:
+            if CourseQ.isSuccess != 1:
                 UserP.courseRemainingCnt = F("courseRemainingCnt") + 1  # TODO:删除非成功课程时课程量有问题
                 UserP.save()
             CreateNotification(username=request.user.username, title="课程删除成功",

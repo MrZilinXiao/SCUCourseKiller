@@ -191,9 +191,10 @@ def getToken(opener):
 
     try:
         token = token_pattern.findall(token_rep)[0][44:76]
+        print("Token:" + str(token))
     except Exception as e:
         print(e)
-        print('Getting Token Error')
+        print('Getting Token Error, may be Cookie Problem')
     return token
 
 
