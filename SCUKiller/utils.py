@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from django.db import transaction
 from django.http import HttpResponse
@@ -225,37 +226,39 @@ def checkResult(result_data, opener):  # 检查结果界面
         result_data_parsed = parse.urlencode(result_data).encode('utf-8')
         resultRequest = request.Request(result_url, result_data_parsed, headers=headers)  # 查询结果
 
-        for i in range(1, checkResultAttempt):
-            resultResponse = opener.open(resultRequest)
-            result = json.loads(resultResponse.read().decode(
-                'utf-8'))  # result示例：{"result":["308104020_06:选课成功！"],"isFinish":true,"schoolId":"100006"}
-            # Request URL: http://zhjw.scu.edu.cn/student/courseSelect/selectResult/query
-            print(result)
-            if result['isFinish'] == True and result['result'][0].find('成功') != -1:
-                #     print("Success select or you've alredy selected")
-                #     success = True
-                # if (result['isFinish'].find("成功") != -1):
-                logger.info("成功！")
-                success = 'success'
-                break
-            elif result['result'][0].find('没有课余量') != -1:
-                success = 'No Available Courses'
-                logger.info("没有课余量")
-                break
-            elif result['result'][0].find('冲突') != -1:
-                success = 'Conflict'
-                logger.info("冲突")
-                break
-            elif result['result'][0].find('校验失败') != -1:
-                success = '验证码'
-                logger.info("验证码问题！！！")
-                break
-
-            # else:
-            #     print("Error")
+        for i in range(checkResultAttempt):
+            try:
+                resultResponse = opener.open(resultRequest)
+                result = json.loads(resultResponse.read().decode(
+                    'utf-8'))  # result示例：{"result":["308104020_06:选课成功！"],"isFinish":true,"schoolId":"100006"}
+                # Request URL: http://zhjw.scu.edu.cn/student/courseSelect/selectResult/query
+                print(result)
+                if result['isFinish'] == True and result['result'][0].find('成功') != -1:
+                    #     print("Success select or you've alredy selected")
+                    #     success = True
+                    # if (result['isFinish'].find("成功") != -1):
+                    logger.info("成功！")
+                    success = 'success'
+                    break
+                elif result['result'][0].find('没有课余量') != -1:
+                    success = 'No Available Courses'
+                    logger.info("没有课余量")
+                    break
+                elif result['result'][0].find('冲突') != -1:
+                    success = 'Conflict'
+                    logger.info("冲突")
+                    break
+                elif result['result'][0].find('校验失败') != -1:
+                    success = '验证码'
+                    logger.info("验证码问题！！！")
+                    break
+            except KeyError as e:
+                time.sleep(0.5)
+                logger.info("查询选课结果失败，不代表选课未成功，进行下一次查询")
+                continue
     except Exception as e:
         print(e)
-        logger.info("查询选课结果失败，不代表选课未成功")
+        logger.info("查询选课结果多次失败，将继续POST一次")
         return False
     return success
 
