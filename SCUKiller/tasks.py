@@ -55,6 +55,7 @@ def watchList(course):
             (availCourse, course.latestRemaining) = watcher.specificWatch(opener, course.keyword, course.kch,
                                                                           course.kxh, course.type,
                                                                           course.term)  # 返回一个可选课程列表
+
             course.attempts = F('attempts') + 1
             attempts += 1
 

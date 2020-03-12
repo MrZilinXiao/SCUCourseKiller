@@ -18,17 +18,11 @@ def specificWatch(opener, keyword, kch, kxh, type, term):
     latestRemaining = -100
     #  根据课程类型构造POST数据
     if type == '自由选课':
-        if keyword == '':
-            post_params = {'searchtj': kch, 'xq': '0', 'jc': '0', 'kclbdm': ''}
-        else:
-            post_params = {'searchtj': keyword, 'xq': '0', 'jc': '0', 'kclbdm': ''}
+        post_params = {'searchtj': kch, 'xq': '0', 'jc': '0', 'kclbdm': ''}
         watch_data_parsed = parse.urlencode(post_params).encode('utf-8')
         Request = request.Request(query_url, watch_data_parsed, headers=headers)
     elif type == '方案选课':
-        if keyword == '':
-            post_params = {'kch': kch, 'xq': '0', 'jc': '0', 'kclbdm': '', 'jhxn': term}
-        else:
-            post_params = {'kch': keyword, 'xq': '0', 'jc': '0', 'kclbdm': '', 'jhxn': term}
+        post_params = {'kch': kch, 'xq': '0', 'jc': '0', 'kclbdm': '', 'jhxn': term}
         watch_data_parsed = parse.urlencode(post_params).encode('utf-8')
         Request = request.Request(planCourse_url, watch_data_parsed, headers=headers)
 
@@ -42,6 +36,9 @@ def specificWatch(opener, keyword, kch, kxh, type, term):
         parser = json.loads(dic['rwRxkZlList'])
     elif type == '方案选课':
         parser = json.loads(dic['rwfalist'])
+
+    # print(parser)  # DEBUG
+
     if len(parser) == 0:
         raise NoSuchCourseException("找不到提供的课程信息所对应的课程！")
     for i in range(len(parser)):
