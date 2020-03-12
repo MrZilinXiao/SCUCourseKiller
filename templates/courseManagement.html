@@ -1,0 +1,434 @@
+{% load staticfiles %}<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>课程管理</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href={% static "css/bootstrap.min.css" %} rel="stylesheet">
+    <link href={% static "css/font-awesome.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/footable/footable.core.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/bootstrap-table/bootstrap-table.min.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/sweetalert/sweetalert.css" %} rel="stylesheet">
+
+    <link href={% static "css/animate.css" %} rel="stylesheet">
+    <link href={% static "css/style.css" %} rel="stylesheet">
+
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>课程管理</h5>
+
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user">
+                            <li><a href="#">选项 01</a>
+                            </li>
+                            <li><a href="#">选项 02</a>
+                            </li>
+                        </ul>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <span style='color:red;'>{{ notice }}</span>
+                    <table class="footable table table-stripped toggle-arrow-tiny" data-page-size="8">
+                        <thead>
+                        <tr>
+                            <th data-toggle="true">课程号</th>
+                            <th>课程名</th>
+                            <th>关键词</th>
+                            <th>课序号</th>
+                            <th>课程类型</th>
+                            <th data-hide="all">学期</th>
+                            <th data-hide="all">添加时间</th>
+                            <th data-hide="all">最新课余量</th>
+                            <th data-hide="all">尝试次数</th>
+                            <th data-hide="all">其他</th>
+                            <th data-hide="all">选项操作</th>
+                            <th>状态</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% if Courses %}
+                            {% for course in Courses %}
+                                <tr>
+                                    <td>{% if course.kch != '' %}{{ course.kch }}{% else %}未指定{% endif %}</td>
+                                    <td>{% if course.kcm != '' %}{{ course.kcm }}{% else %}未指定{% endif %}</td>
+                                    <td>{% if course.keyword != '' %}{{ course.keyword }}{% else %}未指定{% endif %}</td>
+                                    <td>{% if course.kxh != '' %}{{ course.kxh }}{% else %}未指定{% endif %}</td>
+                                    <td>{{ course.type }}</td>
+                                    <td>{{ course.term }}</td>
+                                    <td>{{ course.addTime }}</td>
+                                    <td>{{ course.latestRemaining }}</td>
+                                    <td><span class="pie">{{ course.attempts }}</span></td>
+                                    <td>{% if course.kcm != '' %}授课教师：{{ course.teacher }}<br/>校区：{{ course.campus }}
+                                        <br/>上课地点：{{ course.location }}{% else %}无{% endif %}</td>
+                                    <td><a href="{% url 'courseManagement' %}?del={{ course.cid }}">
+                                        <button id="delCourse" type="button" class="btn btn-w-m btn-danger">删除课程{% if course.gid != '' %}(同一批次添加的课程也会被删除){% endif %}
+                                        </button>
+                                    </a></td>
+                                    <td><i class="fa fa-check text-navy"></i>{{ course.status }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="5">
+                                <ul class="pagination pull-right"></ul>
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>添加课程</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="bindjwcAccount.html#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal m-t" action="{% url "addCourse" %}" novalidate="novalidate"
+                          method="POST">
+                        {% csrf_token %}
+                        {% if errormsg %}
+                            <span style='color:red;'>{{ errormsg }}</span>
+                        {% endif %}
+                        {% if form.non_field_errors %}
+                            {% for item in form.non_field_errors %}
+                                <span style='color:red;'>{{ item }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">课程类型：</label>
+                            <div class="col-sm-8">
+                                <div class="radio">
+                                    {{ form.type }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">关键词：</label>
+                            <div class="col-sm-8">
+                                {{ form.keyword }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">课程号：</label>
+                            <div class="col-sm-8">
+                                {{ form.kch }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">课序号：</label>
+                            <div class="col-sm-8">
+                                {{ form.kxh }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">学期号：</label>
+                            <div class="col-sm-8">
+                                {{ form.term }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-8">
+                                <button id="submit_course" class="btn btn-primary pull-right" type="submit" onclick="">
+                                    <i class="fa fa-check"></i>&nbsp;提交
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="ibox float-e-margins">
+                <div class="ibox-content">
+                    <p class="m-t">监控模式：</p>
+                    <p>1、纯关键词抢课，不能指定课程号与课序号。（例如抢中华文化）
+                    </p>
+                    <p>2、单纯指定课程号，不指定课序号与关键词。（如抢不指定节次的课程，可能中途出现与已有课程冲突）
+                    </p>
+                    <p>3、指定课程号和课序号，需要提前查询好自己课表是否与此课程冲突。
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class='col-sm-6'>
+            <div class="ibox float-e-margins">
+
+                <div id="toolbar" class="btn-group">
+                    <button id="btn-submit" type="button" class="btn btn-w-m btn-success" onclick="">
+                        <span aria-hidden="true" class="icon icon-plus-sign"></span><i class="fa fa-check"></i>提交选中课程
+                    </button>
+                </div>
+                <table id="data-table">
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 全局js -->
+<script src={% static "js/jquery.min.js" %}></script>
+<script src={% static "js/bootstrap.min.js" %}></script>
+<script src={% static "js/plugins/footable/footable.all.min.js" %}></script>
+
+<!-- 自定义js -->
+<script src={% static "js/content.js" %}></script>
+<script>
+    var $table = $('#data-table');
+
+    $(window).resize(function () {
+        //防止表头与表格不对齐
+        $table.bootstrapTable('resetView');
+    });
+
+    $(function () {
+        //使用严格模式
+        "use strict";
+        //表格初始化
+        tableInit();
+        $table.bootstrapTable('hideLoading');//隐藏加载
+    })
+
+    function tableInit() {
+        /**
+         * 初始化Table
+         */
+        //先销毁表格
+        $table.bootstrapTable('destroy');
+        //再初始化表格
+        $table.bootstrapTable({
+            //请求地址,此处数据为本地加载
+            url: '{% url 'getCourseList' %}',
+            //请求方式
+            method: "GET",
+            //请求内容类型
+            contentType: "application/x-www-form-urlencoded",
+            //数据类型
+            dataType: "json",
+            //table高度：如果没有设置，表格自动根据记录条数觉得表格高度
+            height: '582',
+            //是否显示行间隔色
+            striped: true,
+            //是否启用排序
+            sortable: true,
+            //排序方式
+            sortOrder: "asc",
+            //是否使用缓存
+            cache: false,
+            //每行的唯一标识
+            uniqueId: "id",
+            //指定工具栏
+            toolbar: "#toolbar",
+            //显示刷新按钮
+            showRefresh: true,
+            //切换显示样式
+            showToggle: true,
+            //默认显示详细视图
+            cardView: false,
+            //是否显示搜索
+            search: true,
+            strictSearch: true,
+            //是否显示分页
+            pagination: true,
+            //是否启用点击选中行
+            clickToSelect: true,
+            //最少要显示的列数
+            minimumCountColumns: 2,
+            //显示隐藏列
+            showColumns: true,
+            //cell没有值时显示
+            undefinedText: '-',
+            //分页方式：client客户端分页，server服务端分页
+            sidePagination: "server",
+            //每页的记录行数
+            pageSize: 10,
+            //初始化加载第1页，默认第1页
+            pageNumber: 1,
+            paginationFirstText: "首页",
+            paginationPreText: "上一页",
+            paginationNextText: "下一页",
+            paginationLastText: "末页",
+            //按钮样式
+            buttonsClass: 'btn',
+            //分页器class
+            iconSize: 'pager',
+            //查询条件
+            queryParams: function (params) {
+                //这里的键的名字和控制器的变量名必须一直，这边改动，控制器也需要改成一样的
+                var query_params = {
+                    rows: params.limit,                         //页面大小
+                    page: (params.offset / params.limit) + 1,   //页码
+                    sort: params.sort,      //排序列名
+                    sortOrder: params.order, //排位命令（desc，asc）
+
+                    //查询框中的参数传递给后台
+                    search_kw: $('#search-keyword').val(), // 请求时向服务端传递的参数
+                };
+                return query_params;
+            },
+            //表头
+            columns: [{
+                checkbox: true,//checkbox
+                align: 'center',//对其方式
+                valign: 'middle'//对其方式
+            }, {
+                title: '编号',
+                field: 'id', //id
+                align: 'center',
+                valign: 'middle'
+            }, {
+                title: '课程号',
+                field: 'kch',
+                align: 'center',
+                valign: 'middle'
+            }, {
+                title: '课程名',
+                field: 'kcm',
+                align: 'center',
+                valign: 'middle'
+            }, {
+                title: '课序号',
+                field: 'kxh',
+                align: 'center',
+                valign: 'middle'
+            }, {
+                title: '授课教师',
+                field: 'teacher',
+                align: 'center',
+                valign: 'middle'
+            }],
+            onLoadSuccess: function (res) {//可不写
+                //加载成功时
+                console.log(res);
+            }, onLoadError: function (statusCode) {
+                return "加载失败了"
+            }, formatLoadingMessage: function () {
+                //正在加载
+                return "拼命加载中...";
+            }, formatNoMatches: function () {
+                //没有匹配的结果
+                return '无符合条件的记录';
+            }
+        })
+    }
+
+    function refresh() {
+        /**
+         * 刷新表格数据
+         */
+        $table.bootstrapTable('refresh');
+        //$table.bootstrapTable('refresh'.{url:""});//刷新时调用接口防止表格无限销毁重铸时出现英文
+    }
+
+    //事件部分
+    $("#btn-query").on("click", function () {
+        /** * 查询 */
+        refresh();
+    });
+
+    $("#btn-submit").on("click", function () {
+        /**
+         * 提交选中的课程
+         */
+        var selRows = $table.bootstrapTable("getSelections");
+        if (selRows.length === 0) {
+            swal({
+                title: "注意",
+                text: "你没有选择任意一门课程哦！",
+                type: "error"
+            });
+            return;
+        }
+
+        var postData = "ids=";
+        $.each(selRows, function (i) {
+            postData += this.id;
+            if (i < selRows.length - 1) {
+                postData += ",";
+            } else {
+                postData += "&csrfmiddlewaretoken=" + $('[name="csrfmiddlewaretoken"]').val();
+            }
+        });
+
+        $.post("{% url 'getCourseList' %}", postData, function (data) {
+            swal({
+                title: "请求已提交",
+                text: "你所选的课程已经提交到选课系统，稍后可在通知中心与课程管理中查看选课情况。",
+                type: "success",
+                showCancelButton: false,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "我知道了",
+                closeOnConfirm: true
+            }, function () {
+                location.replace('{% url 'courseManagement' %}');
+                $table.bootstrapTable("refresh");
+            });
+        });
+    });
+</script>
+<script>
+    $(function () {
+        $(".btn").click(function () {
+            $(this).button('loading').delay(1000).queue(function () {
+            });
+        });
+    });
+</script>
+<script src={% static "js/plugins/sweetalert/sweetalert.min.js" %}></script>
+
+<!-- Bootstrap table -->
+<script src={% static "js/plugins/bootstrap-table/bootstrap-table.min.js" %}></script>
+<script src={% static "js/plugins/bootstrap-table/bootstrap-table-mobile.min.js" %}></script>
+<script src={% static "js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js" %}></script>
+
+<!-- Peity -->
+<script src={% static "js/demo/bootstrap-table-demo.js" %}></script>
+
+<script>
+    $(document).ready(function () {
+
+        $('.footable').footable();
+        $('.footable2').footable();
+
+    });
+
+</script>
+
+</body>
+</html>

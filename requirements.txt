@@ -1,0 +1,10 @@
+mysqlclient
+retrying
+Django==2.1.8
+Pillow==5.3.0
+requests==2.19.1
+urllib3==1.23
+django-celery==3.3.1
+uwsgi
+redis==2.10.6
+flower

@@ -1,0 +1,52 @@
+version: '3.3'
+services:
+  db:
+    container_name: mymysql
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: SCUCourseKiller
+      MYSQL_USER: root
+      MYSQL_PASSWORD: SCUCourseKiller
+      MYSQL_ROOT_PASSWORD: SCUCourseKiller
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --init-connect='SET NAMES utf8mb4;' --innodb-flush-log-at-trx-commit=0
+    ports:
+    - 3306:3306
+    volumes:
+    - "./SCUKiller/mysql/config:/etc/mysql/conf.d"
+#    networks:
+#      killerNet:
+#        ipv4_address: 172.19.0.2
+  redis:
+    container_name: myredis
+    image: redis:latest
+    restart: always
+    ports:
+    - 6379:6379
+
+
+  web:
+    restart: always
+    container_name: SCUCourseKiller
+    build: ./
+    command: ["./wait-for-it.sh", "db:3306"]
+    ports:
+      - "8000:8000"
+      - "5555:5555"
+      - "10022:22"
+    depends_on:
+      - db
+      - redis
+    links:
+      - db
+      - redis
+#    networks:
+#      killerNet:
+#        ipv4_address: 172.19.0.3
+
+#networks:
+#  killerNet:
+#    driver: bridge
+#    ipam:
+#      config:
+#        - subnet: 172.19.0.0/16

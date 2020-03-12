@@ -1,0 +1,405 @@
+{% load staticfiles %}<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <title>SCUCourseKiller - 神秘之地</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/font-awesome.css" %}" rel="stylesheet">
+    <link href="{% static "css/plugins/iCheck/custom.css" %}" rel="stylesheet">
+    <link href="{% static "css/animate.css" %}" rel="stylesheet">
+    <link href="{% static "css/style.css" %}" rel="stylesheet">
+{#    <link href="{% static "css/plugins/sweetalert/sweetalert.css" %}" rel="stylesheet">#}
+    <link href="https://cdn.bootcss.com/sweetalert/1.1.3/sweetalert.css" rel="stylesheet">
+
+
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>注入点数</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="bindjwcAccount.html#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal" method="POST">
+                        {% csrf_token %}
+                        {% if errormsg %}
+                            <span style='color:red;'>{{ errormsg }}</span>
+                        {% endif %}
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">神秘密码：</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" name="code" placeholder="" value="" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-8">
+                                <button class="btn btn-w-m btn-danger" type="submit" formaction="{% url "topup" %}">
+                                    注入灵魂
+                                </button>
+                                <a href="{% url 'addCodes' %}" class="btn btn-primary btn-xs">管理人员请进
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>点数交换课程余量</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal" method="POST">
+                        {% csrf_token %}
+                        {% if errormsg2 %}
+                            <span style='color:red;'>{{ errormsg2 }}</span>
+                        {% endif %}
+                        <span class="help-block m-b-none">您当前可供兑换的点数为{{ points|floatformat:2 }}， 当前每门课程消耗{{ points_per_course }}点数， 您最多可兑换{{ availCourses }}个剩余课程量。</span>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">兑换课程数：</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" name="course_number" placeholder="" value="" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-8">
+                                <button class="btn btn-w-m btn-danger" type="submit"
+                                        formaction="{% url "storeExchange" %}">
+                                    兑换课程量
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>PY交易</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal" method="POST">
+                        {% csrf_token %}
+                        <span class="has-error" style='color:red;'></span>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">金额：</label>
+
+                            <div class="col-sm-8">
+                                <input id="amount" type="text" name="amount" placeholder="" value=""
+                                       class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-8">
+                                {#                                <button class="btn btn-w-m btn-danger" id="wxpay">微信</button>#}
+                                <div class="btn-group open">
+                                    <a class="btn btn-primary pull-left" id="wxpay"><i class="fa fa-weixin"
+                                                                                       aria-hidden="true"></i>微信支付</a>
+                                </div>
+                                <div class="btn-group open">
+                                    <a class="btn btn-primary pull-left" id="alipay"><i class="fa fa-money"
+                                                                                        aria-hidden="true"></i>支付宝</a>
+                                </div>
+
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.bootcss.com/sweetalert/1.1.3/sweetalert.min.js"></script>
+<!-- 全局js -->
+<script src={% static "js/jquery.min.js" %}></script>
+<script src={% static "js/bootstrap.min.js" %}></script>
+
+<!-- 自定义js -->
+<script src={% static "js/content.js" %}></script>
+<script>
+    $('#wxpay').click(function () {
+        $.ajax({
+            url: '{% url "wxpay" %}',
+            type: 'post',
+            data: {
+                'amount': $('#amount').val(),
+                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+            },
+            success: function (data) {
+                if (data.status === 200) {
+                    var qrcode = data.qrcode;
+                    var amount = data.amount;
+                    var order_num = data.order_no;
+
+                    var int = self.setInterval(function () {
+                        pay_status()
+                    }, 1000);
+
+                    function pay_status() {
+                        $.ajax({
+                            url: '{% url 'check_pay' %}',
+                            dataType: 'json',
+                            type: 'post',
+                            data: {
+                                'order_num': order_num,
+                                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+                            },
+                            success: function (data) {
+                                if (data == '1' || data == '2') {
+                                    window.clearInterval(int); //销毁定时器
+                                    swal(
+                                        '支付成功',
+                                        '你成功地注入了' + amount + '点数！',
+                                        'success'
+                                    )
+
+                                } else if (data == '-1') {
+                                    window.clearInterval(int); //销毁定时器
+                                    swal(
+                                        '支付失败',
+                                        '如果你已经被成功扣款，请联系管理员！',
+                                        'error'
+                                    );
+                                }
+                            },
+                            error: function () {
+                                window.clearInterval(int);
+                                swal(
+                                    '请求出错',
+                                    '请重新提交订单！',
+                                    'error'
+                                );
+                            },
+
+                        });
+                    }
+
+                    swal({
+                            title: '微信支付',
+                            html: true,
+                            text: '订单号： ' + order_num +
+                                '<br /> 支付金额： ' + amount + '元<br />' +
+                                '<div><img src="' + qrcode + '" /></div><br />' +
+                            '支付未完成请不要关闭此页面，不想继续支付请点击取消。',
+                            showConfirmButton: true,
+                            showCancelButton: false,
+                            confirmButtonText:
+                                '取消订单',
+                            closeOnConfirm: false,
+                            showLoaderOnConfirm: true
+                        },
+                        function (isConfirm) {
+                            if (isConfirm) {
+                                window.clearInterval(int);
+                                $.ajax({
+                                    url: '{% url 'cancel_order' %}',
+                                    dataType: 'json',
+                                    type: 'post',
+                                    data: {
+                                        'order_num': order_num,
+                                        'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+                                    },
+                                    success: function (data) {
+                                        if (data == '-1') {
+                                            swal(
+                                                '订单已取消',
+                                                '如果遇到问题可以及时联系客服！:)',
+                                                'success'
+                                            );
+                                        }
+                                    },
+                                    error: function () {
+                                        swal(
+                                            '取消失败',
+                                            '如果扣款成功请联系客服！',
+                                            'error'
+                                        );
+                                    }
+                                })
+                            }
+                        }
+                    )
+                } else{
+                    $('.has-error').html(data.msg)
+                }
+            }
+        })
+    })
+</script>
+<script>
+    $('#alipay').click(function () {
+        $.ajax({
+            url: '{% url "alipay" %}',
+            type: 'post',
+            data: {
+                'amount': $('#amount').val(),
+                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+            },
+            success: function (data) {
+                if (data.status === 200) {
+                    var qrcode = data.qrcode;
+                    var amount = data.amount;
+                    var order_num = data.order_no;
+
+                    var int = self.setInterval(function () {
+                        pay_status()
+                    }, 1000);
+
+                    function pay_status() {
+                        $.ajax({
+                            url: '{% url 'check_pay' %}',
+                            dataType: 'json',
+                            type: 'post',
+                            data: {
+                                'order_num': order_num,
+                                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+                            },
+                            success: function (data) {
+                                if (data == '1' || data == '2') {
+                                    window.clearInterval(int); //销毁定时器
+                                    swal(
+                                        '支付成功',
+                                        '你成功地注入了' + amount + '点数！',
+                                        'success'
+                                    )
+
+                                } else if (data == '-1') {
+                                    window.clearInterval(int); //销毁定时器
+                                    swal(
+                                        '支付失败',
+                                        '如果你已经被成功扣款，请联系管理员！',
+                                        'error'
+                                    );
+                                }
+                            },
+                            error: function () {
+                                window.clearInterval(int);
+                                swal(
+                                    '请求出错',
+                                    '请重新提交订单！',
+                                    'error'
+                                );
+                            },
+
+                        });
+                    }
+
+                    swal({
+                            title: '支付宝支付',
+                            html: true,
+                            text: '订单号： ' + order_num +
+                                '<br /> 支付金额： ' + amount + '元<br />' +
+                                '<div><img src="' + qrcode + '" /></div><br />'+
+                            '支付未完成请不要关闭此页面，不想继续支付请点击取消。',
+                            showConfirmButton: true,
+                            showCancelButton: false,
+                            confirmButtonText:
+                                '取消订单',
+                            closeOnConfirm: false,
+                            showLoaderOnConfirm: true
+                        },
+                        function (isConfirm) {
+                            if (isConfirm) {
+                                window.clearInterval(int);
+                                $.ajax({
+                                    url: '{% url 'cancel_order' %}',
+                                    dataType: 'json',
+                                    type: 'post',
+                                    data: {
+                                        'order_num': order_num,
+                                        'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+                                    },
+                                    success: function (data) {
+                                        if (data == '-1') {
+                                            swal(
+                                                '订单已取消',
+                                                '如果遇到问题可以及时联系客服！:)',
+                                                'success'
+                                            );
+                                        }
+                                    },
+                                    error: function () {
+                                        swal(
+                                            '取消失败',
+                                            '如果扣款成功请联系客服！',
+                                            'error'
+                                        );
+                                    }
+                                })
+                            }
+                        }
+                    )
+                } else{
+                    $('.has-error').html(data.msg)
+                }
+            }
+        })
+    })
+</script>
+<!-- iCheck -->
+<script src="{% static "js/plugins/iCheck/icheck.min.js" %}"></script>
+<script>
+    $(document).ready(function () {
+        $('.i-checks').iCheck({
+            checkboxClass: 'icheckbox_square-green',
+            radioClass: 'iradio_square-green',
+        });
+    });
+</script>
+
+</body>
+
+</html>

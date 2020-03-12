@@ -1,0 +1,135 @@
+{% load staticfiles %}<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <title>SCUKiller - 通知</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href={% static "css/bootstrap.min.css" %} rel="stylesheet">
+    <link href={% static "css/font-awesome.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/iCheck/custom.css" %} rel="stylesheet">
+    <link href={% static "css/animate.css" %} rel="stylesheet">
+    <link href={% static "css/style.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/sweetalert/sweetalert.css" %} rel="stylesheet">
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content">
+    <div class="row">
+        <div class="col-sm-9 animated fadeInRight">
+            <div class="mail-box-header">
+                <h2>
+                    通知（{{ notificationsCnt }}）
+                </h2>
+                <div class="mail-tools tooltip-demo m-t-md">
+                    <div class="btn-group pull-right">
+                        <button class="btn btn-white btn-sm"><i class="fa fa-arrow-left"></i>
+                        </button>
+                        <button class="btn btn-white btn-sm"><i class="fa fa-arrow-right"></i>
+                        </button>
+
+                    </div>
+                    <button class="btn btn-white btn-sm" data-toggle="tooltip" data-placement="left" title="刷新邮件列表"
+                            onclick="self.location.reload()"><i class="fa fa-refresh"></i> 刷新
+                    </button>
+
+                </div>
+            </div>
+            <div class="mail-box">
+
+                <table class="table table-hover table-mail">
+                    <tbody>
+                    <form method="POST" class="form-horizontal">
+                        {% csrf_token %}
+                        {% if notifications %}
+                            {% for item in notifications %}
+                                <tr class="{% if item.isRead %}read{% else %}unread{% endif %}">
+                                    <td class="check-mail">
+                                        <input type="checkbox" value="{{ item.id }}"
+                                               {% if item.isRead %}checked="checked" disabled="disabled" {% endif %}
+                                               name="{{ item.id }}">
+                                    </td>
+                                    <td class="mail-ontact">{{ item.title }}
+                                    </td>
+                                    <td class="mail-subject">{{ item.content }}
+                                    </td>
+                                    <td class=""><i class="fa fa-paperclip"></i>
+                                    </td>
+                                    <td class="text-right mail-date">{{ item.notiTime }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                        <div class="col-sm-8">
+                            <input class="btn btn-w-m btn-info pull-left" type="submit"
+                                   formaction="{% url "notification" %}" value="标记已读" onclick="fresh()"/>
+                            <input class="btn btn-w-m btn-danger pull-left" type="submit" value="删除已读通知"
+                                   formaction="{% url "delReadNotification" %}"/>
+                            <input class="btn btn-w-m btn-danger pull-left delNotification" value="删除全部通知"/>
+
+                        </div>
+                    </form>
+                    </tbody>
+                </table>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 全局js -->
+<script src={% static "js/jquery.min.js" %}></script>
+<script src={% static "js/bootstrap.min.js" %}></script>
+
+<!-- 自定义js -->
+<script src={% static "js/content.js" %}></script>
+<script src={% static "js/iframeFresh.js" %}></script>
+
+<script src={% static "js/plugins/sweetalert/sweetalert.min.js" %}></script>
+<!-- iCheck -->
+<script src={% static "js/plugins/iCheck/icheck.min.js" %}></script>
+<script>
+    $('.delNotification').click(function () {
+        swal({
+            title: "您确定要删除所有通知吗",
+            text: "删除后将无法恢复，请谨慎操作！",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "是的，我要删除！",
+            cancelButtonText: "让我再考虑一下…",
+            closeOnConfirm: false,
+            closeOnCancel: false,
+            showLoaderOnConfirm: true
+        }, function (isConfirm) {
+            var postSomthing = '';
+            if (isConfirm) {
+                $.get("{% url 'delNotification' %}", postSomthing, function (data) {
+                    swal({title: "删除成功！", text: "您已经永久删除了所有通知。", type: "success"}, function () {
+                        location.replace('{% url 'notification' %}');
+                    })
+                });
+            } else {
+                swal({title: "已取消", text: "您取消了删除操作！", type: "error"});
+            }
+        });
+    });
+    $(document).ready(function () {
+        $('.i-checks').iCheck({
+            checkboxClass: 'icheckbox_square-green',
+            radioClass: 'iradio_square-green',
+        });
+    });
+</script>
+
+</body>
+
+</html>

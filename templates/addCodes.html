@@ -1,0 +1,256 @@
+{% load staticfiles %}<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>添加代码</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href={% static "css/bootstrap.min.css" %} rel="stylesheet">
+    <link href={% static "css/font-awesome.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/footable/footable.core.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/bootstrap-table/bootstrap-table.min.css" %} rel="stylesheet">
+    <link href={% static "css/plugins/sweetalert/sweetalert.css" %} rel="stylesheet">
+
+    <link href={% static "css/animate.css" %} rel="stylesheet">
+    <link href={% static "css/style.css" %} rel="stylesheet">
+
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>添加神秘代码</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="bindjwcAccount.html#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal m-t" action="{% url "addCodes" %}" novalidate="novalidate"
+                          method="POST">
+                        {% csrf_token %}
+                        {% if errormsg %}
+                            <span style='color:red;'>{{ errormsg }}</span>
+                        {% endif %}
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">神秘代码个数：</label>
+                            <div class="col-sm-8">
+                                <input type="text" name="number" placeholder="" value="" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">面值：</label>
+                            <div class="col-sm-8">
+                                <input type="text" name="points" placeholder="" value="" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-8">
+                                <button class="btn btn-primary pull-right" type="submit"><i class="fa fa-check"></i>&nbsp;生成
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="row">
+        <div class='col-sm-12'>
+            <div class="ibox float-e-margins">
+                <table id="data-table">
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 全局js -->
+<script src={% static "js/jquery.min.js" %}></script>
+<script src={% static "js/bootstrap.min.js" %}></script>
+<script src={% static "js/plugins/footable/footable.all.min.js" %}></script>
+
+<!-- 自定义js -->
+<script src={% static "js/content.js" %}></script>
+<script>
+    var $table = $('#data-table');
+
+    $(window).resize(function () {
+        //防止表头与表格不对齐
+        $table.bootstrapTable('resetView');
+    });
+
+    $(function () {
+        //使用严格模式
+        "use strict";
+        //表格初始化
+        tableInit();
+        $table.bootstrapTable('hideLoading');//隐藏加载
+    })
+
+    function tableInit() {
+        /**
+         * 初始化Table
+         */
+        //先销毁表格
+        $table.bootstrapTable('destroy');
+        //再初始化表格
+        $table.bootstrapTable({
+            //请求地址,此处数据为本地加载
+            url: '{% url 'getCodesList' %}',
+            //请求方式
+            method: "GET",
+            //请求内容类型
+            contentType: "application/x-www-form-urlencoded",
+            //数据类型
+            dataType: "json",
+            //table高度：如果没有设置，表格自动根据记录条数觉得表格高度
+            height: '582',
+            //是否显示行间隔色
+            striped: true,
+            //是否启用排序
+            sortable: true,
+            //排序方式
+            sortOrder: "asc",
+            //是否使用缓存
+            cache: false,
+            //每行的唯一标识
+            uniqueId: "id",
+            //指定工具栏
+            toolbar: "#toolbar",
+            //显示刷新按钮
+            showRefresh: true,
+            //切换显示样式
+            showToggle: true,
+            //默认显示详细视图
+            cardView: false,
+            //是否显示搜索
+            search: true,
+            strictSearch: true,
+            //是否显示分页
+            pagination: true,
+            //是否启用点击选中行
+            clickToSelect: true,
+            //最少要显示的列数
+            minimumCountColumns: 2,
+            //显示隐藏列
+            showColumns: true,
+            //cell没有值时显示
+            undefinedText: '-',
+            //分页方式：client客户端分页，server服务端分页
+            sidePagination: "server",
+            //每页的记录行数
+            pageSize: 10,
+            //初始化加载第1页，默认第1页
+            pageNumber: 1,
+            paginationFirstText: "首页",
+            paginationPreText: "上一页",
+            paginationNextText: "下一页",
+            paginationLastText: "末页",
+            //按钮样式
+            buttonsClass: 'btn',
+            //分页器class
+            iconSize: 'pager',
+            //查询条件
+            queryParams: function (params) {
+                //这里的键的名字和控制器的变量名必须一直，这边改动，控制器也需要改成一样的
+                var query_params = {
+                    rows: params.limit,                         //页面大小
+                    page: (params.offset / params.limit) + 1,   //页码
+                };
+                return query_params;
+            },
+            //表头
+            columns: [{
+                title: '编号',
+                field: 'id', //id
+                align: 'center',
+                valign: 'middle'
+            }, {
+                title: '神秘代码',
+                field: 'code',
+                align: 'center',
+                valign: 'middle'
+            }, {
+                title: '面值',
+                field: 'points',
+                align: 'center',
+                valign: 'middle'
+            },{
+                title: '使用人',
+                field: 'usedBy',
+                align: 'center',
+                valign: 'middle'
+            },{
+                title: '生成日期',
+                field: 'createTime',
+                align: 'center',
+                valign: 'middle'
+            }],
+            onLoadSuccess: function (res) {//可不写
+                //加载成功时
+                console.log(res);
+            }, onLoadError: function (statusCode) {
+                return "加载失败了"
+            }, formatLoadingMessage: function () {
+                //正在加载
+                return "拼命加载中...";
+            }, formatNoMatches: function () {
+                //没有匹配的结果
+                return '无符合条件的记录';
+            }
+        })
+    }
+
+    function refresh() {
+        /**
+         * 刷新表格数据
+         */
+        $table.bootstrapTable('refresh');
+        //$table.bootstrapTable('refresh'.{url:""});//刷新时调用接口防止表格无限销毁重铸时出现英文
+    }
+
+    //事件部分
+    $("#btn-query").on("click", function () {
+        /** * 查询 */
+        refresh();
+    });
+</script>
+<script src={% static "js/plugins/sweetalert/sweetalert.min.js" %}></script>
+
+<!-- Bootstrap table -->
+<script src={% static "js/plugins/bootstrap-table/bootstrap-table.min.js" %}></script>
+<script src={% static "js/plugins/bootstrap-table/bootstrap-table-mobile.min.js" %}></script>
+<script src={% static "js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js" %}></script>
+
+<!-- Peity -->
+<script src={% static "js/demo/bootstrap-table-demo.js" %}></script>
+
+<script>
+    $(document).ready(function () {
+
+        $('.footable').footable();
+        $('.footable2').footable();
+
+    });
+
+</script>
+
+</body>
+</html>

@@ -1,10 +1,18 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+.idea
 *.py[cod]
 *$py.class
-config.py
+templates/css/*
+templates/fonts/*
+templates/js/*
 # C extensions
 *.so
+
+.log
+log/*
+
+.DS_Store
 
 # Distribution / packaging
 .Python
@@ -53,7 +61,6 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 

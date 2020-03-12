@@ -1,0 +1,2 @@
+* * * * * /root/SCUCourseKiller/crontab.sh
+* * * * * sleep 30; /root/SCUCourseKiller/crontab.sh

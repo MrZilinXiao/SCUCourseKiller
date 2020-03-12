@@ -1,0 +1,22 @@
+#!/bin/bash
+
+export LANG="en_US.UTF-8"
+
+# nginx settings
+sed -i '/user/{s/nginx/root/}' /etc/nginx/nginx.conf
+ln -s /root/SCUCourseKiller/mysite_nginx.conf /etc/nginx/conf.d/
+nginx
+
+#chmod +x crontab.sh
+#crontab crontab.settings
+#crond start
+
+# application settings
+export DJANGO_SETTINGS_MODULE=SCUCourseKiller.settings
+python3 ./manage.py makemigrations
+python3 ./manage.py migrate --noinput
+python3 ./manage.py loaddata ./fixtures/superuser.json
+python3 ./manage.py collectstatic --noinput
+sh ./celery_start.sh
+
+uwsgi --ini ./mysite_uwsgi.ini
