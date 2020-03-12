@@ -17,5 +17,6 @@ python3 ./manage.py makemigrations
 python3 ./manage.py migrate --noinput
 python3 ./manage.py loaddata ./fixtures/superuser.json
 python3 ./manage.py collectstatic --noinput
+sh ./celery_start.sh
 
 uwsgi --ini ./mysite_uwsgi.ini

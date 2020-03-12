@@ -2,7 +2,7 @@
 import djcelery
 import pytz
 from celery import platforms
-from celery.schedules import crontab
+from SCUKiller.config import *
 from datetime import timedelta
 
 djcelery.setup_loader()
@@ -17,7 +17,7 @@ CELERY_IGNORE_RESULT = True
 
 CELERYD_TASK_TIME_LIMIT = 10
 
-BROKER_URL = 'redis://127.0.0.1:6379/6'  # Docker Config
+BROKER_URL = 'redis://redis:6379/6'  # Docker Config
 
 CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
 # 导入任务
@@ -55,7 +55,7 @@ CELERYBEAT_SCHEDULE = {
     'watchUserCourses': {
         'task': 'SCUKiller.tasks.watchUserCourses',
         # 'task': 'SCUKiller.tasks.watchUserCours',
-        'schedule': timedelta(milliseconds=1000),
+        'schedule': timedelta(seconds=watch_interval),
         'options': {
             'queue': 'beat_tasks'
         }
