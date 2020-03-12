@@ -469,7 +469,8 @@ def courseManagement(request):
                 notice = "课程《" + CourseQ.kcm + "》已被成功删除"
             if CourseQ.isSuccess != 1:
                 UserP.courseRemainingCnt = F("courseRemainingCnt") + 1  # TODO:删除非成功课程时课程量有问题，会直接加2
-                UserP.save()
+
+                # UserP.save()
             CreateNotification(username=request.user.username, title="课程删除成功",
                                content=notice)
             Courses = UserQ.UserProfile.coursesHost.all()
