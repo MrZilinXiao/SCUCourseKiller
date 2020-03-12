@@ -1,10 +1,6 @@
 # coding=utf-8
-import os
-import queue
-import threading
 import time
 import re
-import json
 
 import requests
 from django.db import transaction

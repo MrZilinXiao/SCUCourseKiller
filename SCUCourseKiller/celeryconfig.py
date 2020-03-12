@@ -2,7 +2,7 @@
 import djcelery
 import pytz
 from celery import platforms
-from celery.schedules import crontab
+from SCUKiller.config import *
 from datetime import timedelta
 
 djcelery.setup_loader()
@@ -55,7 +55,7 @@ CELERYBEAT_SCHEDULE = {
     'watchUserCourses': {
         'task': 'SCUKiller.tasks.watchUserCourses',
         # 'task': 'SCUKiller.tasks.watchUserCours',
-        'schedule': timedelta(milliseconds=1000),
+        'schedule': timedelta(seconds=watch_interval),
         'options': {
             'queue': 'beat_tasks'
         }

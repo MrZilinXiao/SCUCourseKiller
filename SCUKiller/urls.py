@@ -26,8 +26,7 @@ urlpatterns = [
     url(r'^delReadNotification$', views.delReadNotification, name="delReadNotification"),
     url(r'^delNotification$', views.delNotification, name="delNotification"),
 
-    # url(r'^watcher', watcher.watchCourses, name="watcher"),
-    url(r'^watcher', utils.watchCourses, name="watcher"),
+    # url(r'^watcher', utils.watchCourses, name="watcher"),
     url(r'^check_captcha', views.check_captcha, name="check_captcha"),
     url(r'^checkUsername', views.checkUsername, name="checkUsername"),
     url(r'^checkCookie', views.checkCookie, name="checkCookie"),

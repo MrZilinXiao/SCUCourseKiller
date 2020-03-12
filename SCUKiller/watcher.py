@@ -9,6 +9,7 @@ import json
 
 from urllib import error, parse, request
 from . import jwcAccount as jwcVal
+from .exceptions import *
 
 logger = jwcVal.logger
 
@@ -30,7 +31,10 @@ def specificWatch(opener, keyword, kch, kxh, type, term):
             post_params = {'kch': keyword, 'xq': '0', 'jc': '0', 'kclbdm': '', 'jhxn': term}
         watch_data_parsed = parse.urlencode(post_params).encode('utf-8')
         Request = request.Request(planCourse_url, watch_data_parsed, headers=headers)
+
     Response = opener.open(Request)
+    if Response.url == 'http://zhjw.scu.edu.cn/login':
+        raise CookieInvalidException("Cookie已经失效！")
     req = Response.read().decode('utf-8')
     dic = json.loads(req)
     selectList = []
@@ -39,7 +43,7 @@ def specificWatch(opener, keyword, kch, kxh, type, term):
     elif type == '方案选课':
         parser = json.loads(dic['rwfalist'])
     if len(parser) == 0:
-        raise Exception("找不到提供的课程信息所对应的课程！")
+        raise NoSuchCourseException("找不到提供的课程信息所对应的课程！")
     for i in range(len(parser)):
         if kxh == parser[i]['kxh'] and kch == parser[i]['kch']:
             latestRemaining = parser[i]['bkskyl']

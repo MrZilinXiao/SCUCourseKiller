@@ -15,6 +15,8 @@ from .config import *
 from retrying import retry
 from .models import User
 
+from .exceptions import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -111,7 +113,7 @@ def valjwcAccount(stuID, stuPass, username=''):  # 可以更新Cookie
     loginRequest = request.Request(login_url, login_data_parsed, headers=headers)
     loginResponse = opener.open(loginRequest)
     if loginResponse.url == 'http://zhjw.scu.edu.cn/login?errorCode=badCredentials':
-        raise Exception('密码错误！请删除教务处账号后重新添加！在监控期间请不要修改教务处密码！')
+        raise PasswordInvalidException('密码错误！请删除教务处账号后重新添加！在监控期间请不要修改教务处密码！')
     cookie_dict = requests.utils.dict_from_cookiejar(cookie)
     return cookie_dict
     # except error.HTTPError as e:
