@@ -130,7 +130,7 @@ def watchList(course):
                                "在一次抢课中发现您的账号出现了验证码，请您随后再试，目前已将您账号所有课程设为失败。")
         course.save()
         logger.info("Attempts for " + username + " on this watch: " + str(attempts) + " Success Attempts: " + str(success_cnt))
-        return "For " + course.kcm + " try one, success: " + success_cnt
+        return "For " + course.kcm + " try one, success: " + str(success_cnt)
     except Exception as err:
         logger.error(err)
     finally:  # 可能的异常：超时、未在指定时间

@@ -468,7 +468,7 @@ def courseManagement(request):
                     CourseQ.delete()
                 notice = "课程《" + CourseQ.kcm + "》已被成功删除"
             if CourseQ.isSuccess != 1:
-                UserP.courseRemainingCnt = F("courseRemainingCnt") + 1  # TODO:删除非成功课程时课程量有问题
+                UserP.courseRemainingCnt = F("courseRemainingCnt") + 1  # TODO:删除非成功课程时课程量有问题，会直接加2
                 UserP.save()
             CreateNotification(username=request.user.username, title="课程删除成功",
                                content=notice)
@@ -802,7 +802,7 @@ def Pay(request, method):
             response_dict = response.json()
             if response_dict['return_code'] != 0:
                 raise Exception(
-                    "请求错误，错误代码：" + response_dict['return_code'] + "，错误信息：" + response_dict['return_message'])
+                    "请求错误，错误代码：" + str(response_dict['return_code']) + "，错误信息：" + response_dict['return_message'])
             else:
                 qrcode = response_dict['qrcode']
                 platform_order_no = response_dict['order_no']

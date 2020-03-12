@@ -7,3 +7,4 @@ urllib3==1.23
 django-celery==3.3.1
 uwsgi
 redis==2.10.6
+flower

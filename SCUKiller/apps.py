@@ -19,7 +19,9 @@ class SCUKillerConfig(AppConfig):
     name = 'SCUKiller'
 
     def ready(self):
-        pass  # 考虑使用celery
+        from .models import courses
+        courses.objects.all().update(inq=0)  # 启动时清空了队列
+        # 考虑使用celery
         # watch_Loop = threading.Thread(target=watchLoop)
         # watch_Loop.setDaemon(True)
         # watch_Loop.start()
