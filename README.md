@@ -9,7 +9,13 @@ A web app powered by Django, helping SCU students to monitor their courses statu
 
 用户管理、支付系统、冲突检查和选课过程中的异常处理也在本项目中有所体现。
 
-**本人没有经历成体系的软件工程培训，也无中小型Python项目开发经验，部分代码仅做到了“能用就行”的水准，欢迎您随时提出PR。**
+**本人没有经历成体系的软件工程培训，部分代码仅做到了“能用就行”的水准，欢迎您随时提出PR。**
+
+## Key Components
+
+- 验证码模块：check_captcha.py
+- 登录逻辑：jwcAccount.py
+- Celery定时任务：tasks.py
 
 ## Features
 - Docker-compose部署，开箱即用
@@ -18,9 +24,8 @@ A web app powered by Django, helping SCU students to monitor their courses statu
 - 较为完善的异常处理机制
 
 ## Demo
-![demo](https://raw.githubusercontent.com/MrZilinXiao/SCUCourseKiller/master/repo/1.png "demo")
-![demo2](https://raw.githubusercontent.com/MrZilinXiao/SCUCourseKiller/master/repo/2.png "demo2")
-
+![demo2](https://upyun.mrxiao.net/img/2.png)
+![demo1](https://upyun.mrxiao.net/img/1.png)
 ## Install
 ### Using Docker
 While this repo configuration is for docker-compose, further change is needed about your MySQL and redis data source.
@@ -32,6 +37,10 @@ docker build -t mrzilinxiao/scucoursekiller ./
 docker run -d -p 8000:8000 --name=scucoursekiller mrzilinxiao/scucoursekiller
 ```
 ### Using docker-compose
+
+Docker-compose will build several containers: db, redis and web. 
+
+The container web uses nginx as a middleware, which communicates with Django through WSGI.
 
 ```bash
 git clone https://github.com/MrZilinXiao/SCUCourseKiller.git
