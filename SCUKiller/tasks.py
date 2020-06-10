@@ -143,15 +143,20 @@ def watchList(course):
 def watchUserCourses(request=None):
     print("Watch All Courses Now...")
     courseList = courses.objects.filter(isSuccess=0, inq=False)
-    for c in courseList:
-        c.inq = True
-        c.save(update_fields=['inq'])
-        watchList.apply_async(args=(c,), queue='work_queue')
+    try:  # avoid database timeout
+        for c in courseList:
+            c.inq = True
+            c.save(update_fields=['inq'])
+            watchList.apply_async(args=(c,), queue='work_queue')
 
-    time.sleep(watchGap)  # Celery最短时间是1秒，这里曲线救国
+        time.sleep(watchGap)  # Celery最短时间是1秒，这里曲线救国
 
-    courseList = courses.objects.filter(isSuccess=0, inq=False)
-    for c in courseList:
-        c.inq = True
-        c.save(update_fields=['inq'])
-        watchList.apply_async(args=(c,), queue='work_queue')
+        courseList = courses.objects.filter(isSuccess=0, inq=False)
+        for c in courseList:
+            c.inq = True
+            c.save(update_fields=['inq'])
+            watchList.apply_async(args=(c,), queue='work_queue')
+
+    except Exception as e:
+        courseList.update(inq=False)
+        raise e
