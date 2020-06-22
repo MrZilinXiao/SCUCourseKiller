@@ -205,8 +205,8 @@ def convertSelectData(wantSelect):  # 课程列表转 kcIds 和 kcms
     temp_kcIds = []
     temp_kcms = []
     for course in wantSelect:
-        temp_kcIds.append(course['kch'] + '_' + course['kxh'] + '_' + course['zxjxjhh'])
-        temp_kcms.append(course['kcm'] + '_' + course['kxh'])
+        temp_kcIds.append(course['kch'] + '@' + course['kxh'] + '@' + course['zxjxjhh'])
+        temp_kcms.append(course['kcm'] + '(' + course['kch'] + '@' + course['kxh'] + ')')
     kcIds = ','.join(temp_kcIds)
     t_kcms = ','.join(temp_kcms)
     kcms = ''
