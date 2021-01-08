@@ -1,5 +1,4 @@
 # SCUCourseKiller
-A web app powered by Django, helping SCU students to monitor their courses status.
 
 **Attention: Some parts of this README were written in Simplified Chinese.**
 
@@ -9,7 +8,7 @@ A web app powered by Django, helping SCU students to monitor their courses statu
 
 用户管理、支付系统、冲突检查和选课过程中的异常处理也在本项目中有所体现。
 
-**本人没有经历成体系的软件工程培训，部分代码仅做到了“能用就行”的水准，欢迎您随时提出PR。**
+**在本人完成本项目时尚未经历成体系的软件工程培训，代码整体布局、可重用性与可读性都不堪入目，各位在参考时只选取感兴趣的逻辑实现阅读即可。由于本人已没有选课需求，本项目将被暂时搁置。**
 
 ## Key Components
 
